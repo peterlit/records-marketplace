@@ -1,0 +1,16 @@
+{
+  "name": "records-project",
+  "displayName": "Records Project",
+  "version": "0.2.0",
+  "description": "Bootstrap and run a structured personal records project with an Obsidian-friendly vault and a durable filing workflow.",
+  "author": {
+    "name": "Peter Litskevitch"
+  },
+  "license": "MIT",
+  "keywords": [
+    "records",
+    "obsidian",
+    "medical",
+    "notes"
+  ]
+}

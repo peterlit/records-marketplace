@@ -1,0 +1,29 @@
+{
+  "name": "health",
+  "domain_word": "CLINICAL",
+  "advisor_word": "doctor",
+  "advisor_word_plural": "doctors",
+  "advisor_word_title": "Clinical",
+  "high_stakes_word": "invasive procedures",
+  "disclaimer": "Not medical advice.",
+  "folders": {
+    "02 Chronicle/Results": "Test and lab results, filed as `YYYY-MM-DD <Type> <Detail>`.",
+    "02 Chronicle/Visits": "Visit notes and summaries, filed by date of visit.",
+    "06 Reference/Conditions": "One note per ongoing condition: what it is, how it presents here, what is being done.",
+    "06 Reference/History": "Background predating this project.",
+    "06 Reference/Raw Archive": "Untouched originals exactly as received. Never edit anything in here.",
+    "06 Reference/Raw Archive/Test Results": "Raw result files in `YYYY-MM-DD <Test>/` subfolders.",
+    "06 Reference/Raw Archive/Snapshots": "Dated zip snapshots of the project."
+  },
+  "trends": {
+    "Labs.csv": "date,marker,value,unit,reference_range,source",
+    "Vitals.csv": "date,systolic,diastolic,pulse,weight_kg,notes",
+    "Medications.csv": "date,change,medication,dose,prescriber,reason"
+  },
+  "conservatism_notes": {
+    "conservative": "Default to watchful waiting. Name the invasive option and its evidence, but lead with the least-invasive path and say plainly what would have to change to justify escalating.",
+    "balanced": "Present invasive and non-invasive paths with equal weight and comparable depth. Do not lean.",
+    "interventionist": "Where guidelines support intervention, say so directly and early. Still give the conservative case, but do not bury the interventional option."
+  },
+  "question_list_intro": "Living list. Keep the Urgent / Next visit / Settled split."
+}

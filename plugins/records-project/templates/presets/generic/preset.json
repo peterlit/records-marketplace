@@ -1,0 +1,22 @@
+{
+  "name": "generic",
+  "domain_word": "SUBSTANTIVE",
+  "advisor_word": "advisor",
+  "advisor_word_plural": "advisors",
+  "advisor_word_title": "Advisor",
+  "high_stakes_word": "irreversible decisions",
+  "disclaimer": "Not professional advice.",
+  "folders": {
+    "02 Chronicle/Records": "Documents received, filed as `YYYY-MM-DD <Type> <Detail>`.",
+    "02 Chronicle/Meetings": "Meeting and call notes, filed by date.",
+    "06 Reference/Raw Archive": "Untouched originals exactly as received. Never edit anything in here.",
+    "06 Reference/Raw Archive/Snapshots": "Dated zip snapshots of the project."
+  },
+  "trends": { "Tracking.csv": "date,metric,value,unit,source" },
+  "conservatism_notes": {
+    "conservative": "Default to the reversible option. Name the irreversible one and say what would have to change to justify it.",
+    "balanced": "Present reversible and irreversible paths with equal weight. Do not lean.",
+    "interventionist": "Where the evidence supports decisive action, say so directly. Still give the cautious case."
+  },
+  "question_list_intro": "Living list. Keep the Urgent / Next / Settled split."
+}

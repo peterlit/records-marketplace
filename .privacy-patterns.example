@@ -1,0 +1,16 @@
+# Privacy gate patterns.  Copy to `.privacy-patterns` (gitignored) and fill in.
+#
+#   tier: regex          tier is `clinical` or `identity`
+#
+# clinical = subject data. Never allowed anywhere in the plugin.
+# identity = your own name. Allowed only in manifests, LICENSE, CHANGELOG, README.
+#
+# Real values go ONLY in `.privacy-patterns`, never here.
+
+clinical: Dr\.? Examplename
+clinical: \bSomeMedication\b
+clinical: 1970-01-01
+clinical: \bsomecondition\b
+clinical: someone@example\.com
+
+identity: YourSurname

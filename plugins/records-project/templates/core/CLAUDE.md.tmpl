@@ -1,0 +1,74 @@
+# Standing Rules — {{PROJECT_TITLE}}
+
+*Claude reads this at the start of every chat in this project and follows it automatically. {{OPERATOR_NAME}} can edit this file to change the workflow — it is the control panel.*
+
+---
+
+## On every new chat, before responding
+Read, in order: **this file → memory (MEMORY.md + files) → [[01 Master/Master Summary|Master Summary]] → [[01 Master/Settled — do not re-open|Settled — do not re-open]] → the `01 Master/Questions — *.md` files.** After that you are caught up on the history and current state. **Never ask {{OPERATOR_NAME}} to re-explain history or re-upload prior results.**
+
+## ⚠️ Before "correcting" the record or flagging a gap — check whether it is already settled
+**A value printed on a source document does NOT automatically outrank a curated record.** Sources contain clerical errors. When a source conflicts with our record, the question is **"was this already adjudicated?"** — not "what does the document say?"
+
+1. Check [[01 Master/Settled — do not re-open|Settled — do not re-open]] first.
+2. Then grep the whole project (including [[02 Chronicle]] and [[99 Archive]]) for the term.
+3. Only then record it — and if it *is* new, **add it to the Settled register** so it stays settled.
+
+## Memory is a convenience, never a source of truth
+Anything that must stay true across chats belongs in a **file**, not only in memory. If memory and a file disagree, the file wins.
+
+## Classify each message, then act
+
+**Type A — NEW {{DOMAIN_WORD}} CONTENT** (a result, a decision, advice from {{AN_ADVISOR}}, a status change):
+1. Append a concise entry to [[02 Chronicle/Prompt Log|Prompt Log]] — `date · topic · one-line gist · files touched`.
+2. Update [[01 Master/Master Summary|Master Summary]] if anything changed.
+3. Update the relevant `01 Master/Questions — <{{ADVISOR_WORD}}>.md` — add or resolve items; keep the **Urgent** vs **Next** split.
+4. If the message contains or quotes a **recommendation from {{AN_ADVISOR}}** → generate or refresh a critique in [[04 Critiques]] (steelman *for*, strongest case *against*, interactions, contradictions with other {{ADVISOR_WORD_PLURAL}}, questions it raises).
+5. File pasted results / summaries into the right `02 Chronicle` subfolder; merge tabular data into [[05 Trends]]; add a [[02 Chronicle/Timeline|Timeline]] line.
+6. Update memory{{#if memory_off}} — *disabled for this project; skip*{{/if}}.
+7. Announce what was filed and updated.
+
+**Type B — PURE CONCEPTUAL / EDUCATIONAL** (a "how does X work" question with no new fact):
+→ Append a Prompt Log entry only. Skip master/questions/critique updates.
+
+## Uploads — the only filing job is to drop things in [[03 Inbox]]
+1. Identify type + the **event date** (not the upload date).
+2. Rename to `YYYY-MM-DD <Type> <Detail>` and file it.
+3. Copy the untouched original into [[Raw Archive]].
+4. Merge tabular data into [[05 Trends]], deduping by date; **flag any conflicting values rather than overwriting**.
+5. Add a [[02 Chronicle/Timeline|Timeline]] line; update Master Summary if the picture changed.
+6. Empty [[03 Inbox]].
+
+## Re-uploaded historical files
+The [[05 Trends]] canonical file is the source of truth. Treat a re-upload as *possibly-overlapping input*: merge only new rows, dedupe by date, and **report any old value that changed between versions**.
+
+## Snapshots
+**Trigger: {{SNAPSHOT_RULE}}** Manual overrides: `no snapshot` skips, `snapshot now` forces.
+
+When triggered, write a dated zip into [[Snapshots]] as `snapshot-YYYY-MM-DD-HHMM.zip`. **Exclude** the Snapshots folder itself, [[03 Inbox]], `99 Archive`, and bulky raw data.
+{{#if cloud_folder}}
+⚠️ **This project lives on a cloud-synced folder ({{CLOUD_PROVIDER}}).** Three known hazards:
+- Build the zip in scratch with Python's `zipfile`, then copy it in — the `zip` binary's rename step fails on these mounts.
+- **Verify every copied file is larger than 0 bytes.** Cloud-only files copy as 0 bytes.
+- Deletion may be blocked; leave stray files for {{OPERATOR_NAME}} to remove manually rather than retrying.
+{{/if}}
+
+## How to frame recommendations
+- **{{DECISION_MAKER}} is the decision-maker.** Do not assume the person typing holds that role.
+- Present **balanced, steelmanned options — never directives.**
+- {{ADVISOR_WORD_TITLE}} advice is input, not instruction: note where {{ADVISOR_WORD_PLURAL}} disagree, and what each one's position assumes.
+- **Conservatism dial for {{HIGH_STAKES_WORD}}: {{CONSERVATISM}}.** {{CONSERVATISM_NOTE}}
+- Own mistakes plainly and fix them. Do not collapse into apology.
+
+## Overrides
+- `log only` → treat as Type B. · `full update` → force Type A.
+- `no snapshot` → skip the zip. · `quiet` → do the updates but don't narrate.
+- `orient` → give a 5-line status of where things stand before proceeding.
+
+## Conventions
+- ISO dates everywhere: `YYYY-MM-DD`.
+- Reports and deliverables in **Markdown**{{#if obsidian}}, with Obsidian-friendly wikilinks in double square brackets (escape pipes inside tables){{/if}}.
+- Never expose internal infrastructure paths.
+{{#if store_sensitive}}
+- Sensitive personal data may be stored in this project — consent recorded {{CONSENT_DATE}}.
+{{/if}}

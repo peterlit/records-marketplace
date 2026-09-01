@@ -1,0 +1,10 @@
+#!/bin/sh
+# Runs the privacy gate BEFORE the commit is made. A leak committed is a leak
+# in history forever - deleting the file later does not remove the blob.
+ROOT="$(git rev-parse --show-toplevel)"
+python3 "$ROOT/plugins/records-project/scripts/lint_privacy.py" || {
+  echo
+  echo "COMMIT BLOCKED - privacy gate failed. Fix before committing;"
+  echo "a committed leak stays in history even if you delete the file."
+  exit 1
+}

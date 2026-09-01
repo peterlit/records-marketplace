@@ -1,0 +1,15 @@
+#!/bin/sh
+# Blocks a push if the privacy gate fails. Install with:  ./hooks/install.sh
+ROOT="$(git rev-parse --show-toplevel)"
+echo "privacy gate..."
+python3 "$ROOT/plugins/records-project/scripts/lint_privacy.py" || {
+  echo
+  echo "PUSH BLOCKED - the privacy gate did not pass."
+  echo "Fix the findings above, or run with --no-verify if you are certain."
+  exit 1
+}
+python3 "$ROOT/plugins/records-project/scripts/lint_frontmatter.py" >/dev/null || {
+  echo "PUSH BLOCKED - a SKILL.md uses non-portable frontmatter."
+  exit 1
+}
+echo "gates passed."
