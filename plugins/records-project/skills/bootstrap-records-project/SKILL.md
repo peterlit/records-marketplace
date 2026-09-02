@@ -35,7 +35,7 @@ Ask these as **one or two batched multiple-choice rounds**, not an interrogation
 **Ask only if not obvious:**
 
 9. **Obsidian?** → `--obsidian`. Default **on** if they use it or don't know; harmless if unused. It installs the Folder Notes plugin config and writes a folder note per folder.
-10. **Cloud-synced folder?** → `--cloud iCloud|Dropbox|Google Drive|OneDrive`. If yes, the generated `CLAUDE.md` gains the sync hazard rules — build zips in scratch, verify no 0-byte copies, expect deletion to be blocked. **Check the path for `iCloud`, `Dropbox`, `OneDrive` or `Google Drive` and confirm rather than asking blind.**
+10. **Cloud-synced folder?** → `--cloud iCloud|Dropbox|Google Drive|OneDrive`. If yes, the generated `CLAUDE.md` gains the sync hazard rules — build zips in scratch, verify no 0-byte copies, and use `allow_cowork_file_delete` when `rm` is refused (deletion protection is Cowork's, not the provider's). **Check the path for `iCloud`, `Dropbox`, `OneDrive` or `Google Drive` and confirm rather than asking blind.**
 11. **Snapshot trigger** → `--snapshot master|always|never`. Default `master` (only when `01 Master/` changes) — this is the setting that stops snapshot spam.
 
 **Ask explicitly, never assume — these two are consent questions:**
@@ -48,12 +48,28 @@ Ask these as **one or two batched multiple-choice rounds**, not an interrogation
 Locate the scripts. **Never hardcode a plugin path in a shell command** — `${CLAUDE_PLUGIN_ROOT}` does not exist in every environment. Try in order, stop at the first hit:
 
 ```bash
-for c in "${CLAUDE_PLUGIN_ROOT:-}/scripts" \
-         $(ls -d /sessions/*/mnt/.claude/skills/bootstrap-records-project/../../scripts 2>/dev/null) \
-         $(ls -d ~/.claude/skills/*/scripts 2>/dev/null); do
-  [ -f "$c/scaffold.py" ] && echo "FOUND: $c" && break
+# Resolve the plugin root. Order matters; stop at the first hit.
+SKILL=bootstrap-records-project
+ROOT=""
+# 1. Claude Code sets this.
+[ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -d "$CLAUDE_PLUGIN_ROOT/scripts" ] && ROOT="$CLAUDE_PLUGIN_ROOT"
+# 2. Cowork, marketplace-installed: .remote-plugins/<opaque-id>/ - the id is NOT the plugin name,
+#    so identify our plugin by one of its skills, then step up two levels to the plugin root.
+[ -z "$ROOT" ] && for d in /sessions/*/mnt/.remote-plugins/*/skills/$SKILL; do
+  [ -d "$d" ] && ROOT="$(cd "$d/../.." && pwd)" && break
 done
+# 3. Cowork, built-in plugin: skills mount flat by skill name.
+[ -z "$ROOT" ] && for d in /sessions/*/mnt/.claude/skills/$SKILL; do
+  [ -d "$d" ] && ROOT="$(cd "$d/.." && pwd)" && break
+done
+# 4. Local dev.
+[ -z "$ROOT" ] && for d in "$HOME"/.claude/skills/*/skills/$SKILL; do
+  [ -d "$d" ] && ROOT="$(cd "$d/../.." && pwd)" && break
+done
+echo "plugin root: ${ROOT:-NOT FOUND}"
 ```
+
+**Verified 2026-09-02 against a real marketplace install:** strategy 2 is the one that fires in Cowork. The plugin mounts read-only at `/sessions/<session>/mnt/.remote-plugins/<opaque-id>/` with `scripts/`, `skills/` and `templates/` all present, and the scripts execute normally. **Do not expect the plugin name in that path** — the directory is an opaque id.
 
 Then run it, quoting every value:
 

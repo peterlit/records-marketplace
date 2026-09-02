@@ -14,6 +14,24 @@ Read, in order: **this file → memory (MEMORY.md + files) → [[01 Master/Maste
 2. Then grep the whole project (including [[02 Chronicle]] and [[99 Archive]]) for the term.
 3. Only then record it — and if it *is* new, **add it to the Settled register** so it stays settled.
 
+{{#if shared}}
+## ⚠️ Two co-users, equal standing — read this before anything else
+{{CO_USER_LIST}}
+
+**Neither outranks the other.** Both file, both ask anything, both run audits and critiques, both may settle questions. There is no operator and no contributor here; there are two co-users. *(Being a co-user is not the same as being the decision-maker — see "How to frame recommendations" below.)*
+
+**Memory is NOT shared between them.** Each co-user has their own Claude account with its own memory. **The files in this folder are the only shared truth.** If memory and a file disagree, the file wins — and never leave anything that matters in memory alone.
+
+**Start every session by reading the most recent [[02 Chronicle/Prompt Log|Prompt Log]] entries.** That is how this account learns what the *other* co-user did since it last worked. **The Prompt Log is this project's shared conversation** — it is the reason neither person has to be present for the other's chats.
+
+**Always record who.** Every Prompt Log entry names its author. Timeline entries for reported observations name the reporter ("reported by …"). An unattributed claim cannot be traced back or corrected later.
+
+**Contention.** Appends are safe — Prompt Log rows, Timeline rows, Inbox drops, new files in the chronicle. Two people never write the same one. **The curated files in [[01 Master]] are what can collide.** Before rewriting a Master file, re-read it: if it changed since this session began, **merge rather than overwrite**, and say in the Prompt Log that you merged.
+{{#if cloud_folder}}
+**Sync conflicts.** This folder is shared via {{CLOUD_PROVIDER}}. If you see files named `(conflicted copy)`, `(2)`, or `.sync-conflict-`, **stop and resolve them before doing anything else** — the record has forked. Run `validate_vault.py`, which detects them and refuses to proceed.
+{{/if}}
+{{/if}}
+
 ## Memory is a convenience, never a source of truth
 Anything that must stay true across chats belongs in a **file**, not only in memory. If memory and a file disagree, the file wins.
 
@@ -50,7 +68,10 @@ When triggered, write a dated zip into [[Snapshots]] as `snapshot-YYYY-MM-DD-HHM
 ⚠️ **This project lives on a cloud-synced folder ({{CLOUD_PROVIDER}}).** Three known hazards:
 - Build the zip in scratch with Python's `zipfile`, then copy it in — the `zip` binary's rename step fails on these mounts.
 - **Verify every copied file is larger than 0 bytes.** Cloud-only files copy as 0 bytes.
-- Deletion may be blocked; leave stray files for {{OPERATOR_NAME}} to remove manually rather than retrying.
+- **If `rm` fails with "Operation not permitted", do NOT give up and do NOT tell {{OPERATOR_NAME}} to delete by hand.**
+  This is **Cowork's deletion protection**, not a {{CLOUD_PROVIDER}} limitation — it applies to every connected
+  folder including ordinary local disks. Call **`allow_cowork_file_delete`** to request permission.
+  {{#if gdrive}}Fallback: the Google Drive connector's `trash_file` can remove what bash cannot.{{/if}}
 {{/if}}
 
 ## How to frame recommendations

@@ -20,16 +20,31 @@ Confirms that a plugin-bundled script can be **found** and **run** on whatever s
 
 1. Locate this skill's own directory by trying each strategy in order and stopping at the first hit:
 
-   ```bash
-   for c in "${CLAUDE_PLUGIN_ROOT:-}/scripts" \
-            "${CLAUDE_SKILL_DIR:-}/../../scripts" \
-            $(ls -d /sessions/*/mnt/.claude/skills/records-spike 2>/dev/null) \
-            $(ls -d ~/.claude/skills/records-spike 2>/dev/null); do
-     [ -d "$c" ] && echo "FOUND: $c" && break
-   done
+      ```bash
+# Resolve the plugin root. Order matters; stop at the first hit.
+SKILL=records-spike
+ROOT=""
+# 1. Claude Code sets this.
+[ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -d "$CLAUDE_PLUGIN_ROOT/scripts" ] && ROOT="$CLAUDE_PLUGIN_ROOT"
+# 2. Cowork, marketplace-installed: .remote-plugins/<opaque-id>/ - the id is NOT the plugin name,
+#    so identify our plugin by one of its skills, then step up two levels to the plugin root.
+[ -z "$ROOT" ] && for d in /sessions/*/mnt/.remote-plugins/*/skills/$SKILL; do
+  [ -d "$d" ] && ROOT="$(cd "$d/../.." && pwd)" && break
+done
+# 3. Cowork, built-in plugin: skills mount flat by skill name.
+[ -z "$ROOT" ] && for d in /sessions/*/mnt/.claude/skills/$SKILL; do
+  [ -d "$d" ] && ROOT="$(cd "$d/.." && pwd)" && break
+done
+# 4. Local dev.
+[ -z "$ROOT" ] && for d in "$HOME"/.claude/skills/*/skills/$SKILL; do
+  [ -d "$d" ] && ROOT="$(cd "$d/../.." && pwd)" && break
+done
+echo "plugin root: ${ROOT:-NOT FOUND}"
    ```
 
-   In Cowork the third strategy is the one that fires: plugin skills mount **flattened by skill name** at `/sessions/<session>/mnt/.claude/skills/<skill-name>/`, with no plugin-name segment in the path.
+**Verified 2026-09-02 against a real marketplace install:** strategy 2 is the one that fires in Cowork. The plugin mounts read-only at `/sessions/<session>/mnt/.remote-plugins/<opaque-id>/` with `scripts/`, `skills/` and `templates/` all present, and the scripts execute normally. **Do not expect the plugin name in that path** — the directory is an opaque id.
+
+   **Two different Cowork layouts exist.** A *marketplace-installed* plugin mounts at `/sessions/<session>/mnt/.remote-plugins/<opaque-id>/` (the id is not the plugin name); a *built-in* plugin's skills mount flattened by skill name at `/sessions/<session>/mnt/.claude/skills/<skill-name>/`. The locator must try both.
 
 2. Run the probe, which performs the same resolution in Python and reports the result:
 

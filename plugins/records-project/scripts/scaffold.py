@@ -27,10 +27,22 @@ CORE_FOLDERS = {
 
 # ---------- tiny template renderer: {{VAR}} and {{#if flag}}...{{/if}} ----------
 
+# Matches an {{#if}}...{{/if}} pair whose body contains no further {{#if}},
+# i.e. always the innermost. Looping it resolves arbitrary nesting.
+INNERMOST_IF = re.compile(r"\{\{#if (\w+)\}\}((?:(?!\{\{#if )[\s\S])*?)\{\{/if\}\}")
+
+
 def render(text, ctx):
     def block(m):
         return m.group(2) if ctx.get(m.group(1)) else ""
-    text = re.sub(r"\{\{#if (\w+)\}\}(.*?)\{\{/if\}\}", block, text, flags=re.S)
+    for _ in range(20):
+        text, n = INNERMOST_IF.subn(block, text)
+        if not n:
+            break
+    else:
+        raise ValueError("template nesting too deep or unbalanced {{#if}}")
+    if "{{#if" in text or "{{/if}}" in text:
+        raise ValueError("unbalanced {{#if}}/{{/if}} in template")
     def var(m):
         key = m.group(1)
         if key not in ctx:
@@ -78,6 +90,9 @@ def main():
     ap.add_argument("--subject", default="the subject")
     ap.add_argument("--dob", default="")
     ap.add_argument("--operator", default="the owner")
+    ap.add_argument("--co-user", dest="co_users", action="append", default=[],
+                    help="repeatable. Two or more makes this a shared project "
+                         "with equal co-users (no operator/contributor split).")
     ap.add_argument("--decision-maker", dest="dm", default="")
     ap.add_argument("--advisor", action="append", default=[],
                     help='repeatable "Name:role"')
@@ -120,7 +135,19 @@ def main():
         "CLOUD_PROVIDER": a.cloud or "cloud sync", "CONSENT_DATE": today,
         "has_dob": bool(a.dob), "obsidian": a.obsidian, "cloud_folder": bool(a.cloud),
         "memory_off": not a.memory, "store_sensitive": a.store_sensitive,
+        "gdrive": "drive" in a.cloud.lower(),
     }
+
+    # Co-users are PEERS. Two or more switches the engine into shared mode.
+    co = [c.strip() for c in a.co_users if c.strip()]
+    shared = len(co) >= 2
+    ctx["shared"] = shared
+    ctx["FIRST_AUTHOR"] = co[0] if co else a.operator
+    ctx["CO_USER_LIST"] = ("\n".join(f"- **{c}**" for c in co)
+                           if co else "_No co-users recorded._")
+    if shared:
+        # In shared mode nobody is "the operator" - the engine addresses whoever is typing.
+        ctx["OPERATOR_NAME"] = "either co-user"
 
     advisors = [s.split(":", 1) if ":" in s else (s, "") for s in a.advisor]
     ctx["ADVISOR_ROSTER"] = ("\n".join(

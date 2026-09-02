@@ -1,9 +1,12 @@
 # Prompt Log
 
-*Chronological record of prompts across all chats in this project. Concise entries: `date · topic · gist · files touched`. Appended automatically per `CLAUDE.md`.*
+*Chronological record of prompts across all chats in this project. Concise entries: `date · who · topic · gist · files touched`. Appended automatically per `CLAUDE.md`.*
+{{#if shared}}
+> **This is the shared conversation.** Two co-users work this project from separate Claude accounts with separate memories — this log is how each learns what the other did. **Read the most recent entries at the start of every session, and always name the author.**
+{{/if}}
 
-| Date | Topic | Gist | Files touched |
-|---|---|---|---|
-| {{TODAY}} | Project created | Scaffolded {{PROJECT_TITLE}} with the `{{PRESET}}` preset. | whole structure |
+| Date | Who | Topic | Gist | Files touched |
+|---|---|---|---|---|
+| {{TODAY}} | {{FIRST_AUTHOR}} | Project created | Scaffolded {{PROJECT_TITLE}} with the `{{PRESET}}` preset. | whole structure |
 
 *New chats append here going forward.*
