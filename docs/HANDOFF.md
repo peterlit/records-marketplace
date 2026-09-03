@@ -10,15 +10,13 @@ It was extracted from a real, year-old medical records project. **The folder str
 
 ## Current state
 
-- **v0.3.0, staged but NOT committed.** 9 files, ~132 insertions. See `git status`.
-- Reason it wasn't committed: **git cannot commit through a Cowork-mounted folder** — git appends to `.git/logs/HEAD` on every commit, and the mount refuses appends to existing files ("Resource deadlock avoided"). Creating new files in `.git/` works; appending does not. **In Claude Code this is a non-issue** — commit normally.
-- Commit message drafted; gates were run manually against exactly this content and passed.
+**v0.6.0.** Seven skills, six scripts, two domain presets, five provider profiles.
+Solo and shared modes both work; verified against a real Google Drive folder.
 
-```bash
-git status                     # 9 staged files
-sh hooks/install.sh            # installs pre-commit + pre-push (they work here)
-git commit && git push
-```
+Note for a Claude Code session: earlier handoffs warned that **git cannot commit through a
+Cowork-mounted folder** (git appends to `.git/logs/HEAD`; the mount refuses appends to
+existing files, "Resource deadlock avoided"). That is a Cowork limitation only — commit
+normally here, and `sh hooks/install.sh` gives you working pre-commit/pre-push gates.
 
 ## Verify before trusting anything
 
@@ -50,6 +48,12 @@ python3 $P/scripts/validate_vault.py /tmp/v               # must print "vault va
 
 **Link style: wikilinks only.** `--links wiki|markdown|plain` was built (v0.5.0/0.5.1) and **reverted** (0.4.0 + `records-export-doc`). Markdown links are *worse* than wikilinks on Drive for the reason in the table above, and `plain` only looked marginally nicer while losing Obsidian navigation and Folder Notes click-through entirely. The maintainer judged the option not worth its complexity. **If the "markdown looks ugly in Drive" complaint comes back, the answer is `records-export-doc`** — render a formatted Google Doc on demand — not a link-style setting.
 
+**No static triggering metric.** A word-overlap analyzer (`lint_triggering.py`) was built
+and deleted the same day. It cannot see negation — adding "DO NOT USE for X" *raises* the
+score against X — and after three tunings it ranked `records-sync-status` top for "my mother
+was just diagnosed". **Do not rebuild it.** Keep `evals/evals.json` and run it through
+skill-creator's `run_eval.py`, which puts Claude in the loop. Triggering has no cheap proxy.
+
 **Google Docs as storage: no.** Verified by creating one: on the Drive mount a Doc is a ~170-byte `.gdoc` pointer, not content. `grep` can't search it, Obsidian can't read it, the connector can't edit it, and **`snapshot.py` would archive only pointers and report success** — backups containing no data. Docs are for *export*, never for storage.
 
 ## Hard-won rules the generated projects depend on
@@ -64,11 +68,16 @@ These exist because the source project got them wrong repeatedly. They are the a
 
 ## What's next
 
-- **S2/S3 of the shared-Drive design** — in-folder `MEMORY.md`, `_sync` presence markers, optimistic concurrency on curated files. See `docs/design/02-shared-drive-design.md`.
-- **Provider profiles as data** (`templates/providers/*.json`) + **`.records-project.json`** so a vault describes itself + **`scaffold.py --reconfigure`**. Makes the storage provider reversible. §1f of the same doc.
-- **Triggering evals.** The least-tested part of the whole plugin. Descriptions were checked for keyword coverage, which is *not* the same as checking behaviour. Use `skill-creator`'s eval harness.
-- **A third preset** would test whether the core/preset seam is real. `generic` is currently a hypothesis, not a demonstration.
-- Decide whether `records-spike` (a diagnostic) should ship to end users at all.
+- **Refresh the installed plugin and use it for real.** The Update button greys out because
+  Cowork caches *marketplace* metadata; uninstall and reinstall forces a refresh. Everything
+  below this line has been tested locally; almost nothing has been tested by a second person.
+- **Run `evals/evals.json` through skill-creator's `run_eval.py`.** Triggering remains the
+  least-verified property of the plugin, and there is no cheap substitute (see above).
+- **A third preset** would test whether the core/preset seam is real. `generic` is currently
+  a hypothesis, not a demonstration — it has never been used for an actual non-medical case.
+- **Decide whether `records-spike` ships.** It is a diagnostic for the builder, not the user.
+- **Dropbox profile is unverified.** `templates/providers/dropbox.json` was written from
+  documentation; no Dropbox vault has been built.
 
 ## Where the reasoning lives
 

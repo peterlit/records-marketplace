@@ -87,16 +87,25 @@ this is unrelated work reusing the number.)*
 
 ## 0.6.0 — 2026-09-02
 
-- **Triggering eval corpus** (`evals/evals.json`, skill-creator schema) — 18 prompts
-  across all 7 skills, including **5 near-miss negatives** that must fire nothing:
-  "organise my Downloads", "export this spreadsheet as a PDF", "review this PR and tell
-  me what I'm missing". Negatives are usually what an eval set is missing, and they are
-  what catches a description that fires on a keyword rather than a situation.
-- **`lint_triggering.py`** — static proxy flagging two failure classes: two skills
-  competing for the same prompt, and a negative prompt scoring high against a skill.
-  ⚠️ Documented in the script itself as **not a measure of triggering** — that needs
-  Claude in the loop via skill-creator's `run_eval.py`.
-- **Fixed a real description gap it found**: `file-to-records` shared **zero vocabulary**
-  with "the cardiologist just called and changed the dose" — a core use case. Widened to
-  cover verbal reports, medication and dose changes, symptoms appearing, and decisions
-  being made, not just files landing in the Inbox.
+- **Triggering eval corpus** (`evals/evals.json`, skill-creator schema) — 22 prompts across
+  all 7 skills, **9 of them near-miss negatives** that must fire nothing: "organise my
+  Downloads", "export this spreadsheet as a PDF", "review this PR and tell me what I'm
+  missing", "help me organize my tax documents", "clear my email backlog". Negatives are
+  what an eval set usually lacks and what catches a description firing on a keyword
+  rather than a situation. Feed this to skill-creator's `run_eval.py`.
+- **`file-to-records` description widened** — it shared *zero* vocabulary with "the
+  cardiologist just called and changed the dose", a core use case. Now covers verbal
+  reports, medication and dose changes, symptoms and decisions, not only files arriving.
+- **`bootstrap-records-project` description narrowed** — it was deliberately pushy and
+  scored high on ordinary tidying requests. Now requires an ONGOING situation with
+  advisors and decisions, with an explicit DO NOT USE clause for one-off tidying, and
+  "if unsure, ask before scaffolding anything".
+- **Removed `lint_triggering.py`.** A static word-overlap analyzer was built and then
+  deleted the same day. It found one real bug, but tuning it three times produced
+  contradictory guidance, and it ended up ranking `records-sync-status` — a skill about
+  presence markers — top for "my mother was just diagnosed". Word overlap measures
+  vocabulary, not meaning, and it cannot see negation at all: adding "DO NOT USE for
+  clearing an email backlog" made the tool report the skill as *more* likely to fire on
+  that phrase. **A metric that inverts on a correct fix is worse than no metric**, because
+  it invites optimising against noise. Triggering needs Claude in the loop; there is no
+  cheap proxy.

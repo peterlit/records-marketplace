@@ -17,35 +17,48 @@
       "expect_skill": "bootstrap-records-project",
       "prompt": "I want to start tracking everything to do with my father's care in one place.",
       "expected_output": "Interviews, then scaffolds",
-      "expectations": ["Asks about domain, subject, advisors and decision-maker"]
+      "expectations": [
+        "Asks about domain, subject, advisors and decision-maker"
+      ]
     },
     {
       "id": 3,
       "expect_skill": "bootstrap-records-project",
       "prompt": "Set up a system for my divorce paperwork.",
       "expected_output": "Scaffolds with the generic preset",
-      "expectations": ["Chooses generic rather than health", "Uses advisor vocabulary, not doctor"]
+      "expectations": [
+        "Chooses generic rather than health",
+        "Uses advisor vocabulary, not doctor"
+      ]
     },
     {
       "id": 4,
       "expect_skill": "file-to-records",
       "prompt": "I dropped a lab result in the Inbox.",
       "expected_output": "Files it by event date, archives the original, merges trends",
-      "expectations": ["Uses the date on the document, not today", "Copies the original to Raw Archive first"]
+      "expectations": [
+        "Uses the date on the document, not today",
+        "Copies the original to Raw Archive first"
+      ]
     },
     {
       "id": 5,
       "expect_skill": "file-to-records",
       "prompt": "The cardiologist just called and changed the dose. Here is what she said: ...",
       "expected_output": "Type A: logs, updates summary and question list, triggers a critique",
-      "expectations": ["Records who said it and when", "Triggers records-critique for advisor advice"]
+      "expectations": [
+        "Records who said it and when",
+        "Triggers records-critique for advisor advice"
+      ]
     },
     {
       "id": 6,
       "expect_skill": "file-to-records",
       "prompt": "Can you catch up the Inbox? A few things have piled up.",
       "expected_output": "Processes every item, empties the Inbox",
-      "expectations": ["Detects duplicates by content, not filename"]
+      "expectations": [
+        "Detects duplicates by content, not filename"
+      ]
     },
     {
       "id": 7,
@@ -62,7 +75,9 @@
       "expect_skill": "records-gap-audit",
       "prompt": "I have an appointment next week. Has anything fallen through the cracks?",
       "expected_output": "Gap audit ahead of an appointment",
-      "expectations": ["Checks whether a later document already resolved each candidate gap"]
+      "expectations": [
+        "Checks whether a later document already resolved each candidate gap"
+      ]
     },
     {
       "id": 9,
@@ -80,21 +95,28 @@
       "expect_skill": "records-critique",
       "prompt": "My two specialists are telling me different things about the same test.",
       "expected_output": "Lays out both positions without resolving them",
-      "expectations": ["Leaves the disagreement standing as the finding", "Names who decides"]
+      "expectations": [
+        "Leaves the disagreement standing as the finding",
+        "Names who decides"
+      ]
     },
     {
       "id": 11,
       "expect_skill": "records-sync-status",
       "prompt": "Is my wife working in the records project right now?",
       "expected_output": "Reports ACTIVE/STALE sessions from _sync/",
-      "expectations": ["Describes markers as awareness, never a lock"]
+      "expectations": [
+        "Describes markers as awareness, never a lock"
+      ]
     },
     {
       "id": 12,
       "expect_skill": "records-sync-status",
       "prompt": "I am seeing files with 'conflicted copy' in the name.",
       "expected_output": "Runs the validator and stops until resolved",
-      "expectations": ["Refuses to file or audit on top of a forked record"]
+      "expectations": [
+        "Refuses to file or audit on top of a forked record"
+      ]
     },
     {
       "id": 13,
@@ -111,35 +133,85 @@
       "expect_skill": null,
       "prompt": "What does an elevated ferritin usually mean?",
       "expected_output": "A plain answer. No skill should fire - this is Type B, purely conceptual.",
-      "expectations": ["No filing, no summary update, no critique"]
+      "expectations": [
+        "No filing, no summary update, no critique"
+      ]
     },
     {
       "id": 15,
       "expect_skill": null,
       "prompt": "Can you organise my Downloads folder?",
       "expected_output": "Ordinary file tidying. bootstrap-records-project must NOT fire on the word 'organise'.",
-      "expectations": ["Does not scaffold a records vault"]
+      "expectations": [
+        "Does not scaffold a records vault"
+      ]
     },
     {
       "id": 16,
       "expect_skill": null,
       "prompt": "Export this spreadsheet as a PDF.",
       "expected_output": "Ordinary conversion. records-export-doc must NOT fire on the word 'export'.",
-      "expectations": ["Does not create a Google Doc from a records vault"]
+      "expectations": [
+        "Does not create a Google Doc from a records vault"
+      ]
     },
     {
       "id": 17,
       "expect_skill": null,
       "prompt": "Review this pull request and tell me what I am missing.",
       "expected_output": "Code review. records-gap-audit must NOT fire on 'what am I missing'.",
-      "expectations": ["Does not read a records vault"]
+      "expectations": [
+        "Does not read a records vault"
+      ]
     },
     {
       "id": 18,
       "expect_skill": null,
       "prompt": "My colleague gave me some advice about my career. What do you think?",
       "expected_output": "Ordinary conversation. records-critique must NOT fire outside a records project.",
-      "expectations": ["Does not write to 04 Critiques"]
+      "expectations": [
+        "Does not write to 04 Critiques"
+      ]
+    },
+    {
+      "id": 19,
+      "expect_skill": null,
+      "prompt": "Help me organize my tax documents.",
+      "expected_output": "Ordinary help. bootstrap-records-project must NOT fire.",
+      "expectations": [
+        "One-off tidying. Finishes when done; no advisors, no decisions to track.",
+        "Does not propose scaffolding a vault"
+      ]
+    },
+    {
+      "id": 20,
+      "expect_skill": null,
+      "prompt": "I'm overwhelmed with paperwork at work.",
+      "expected_output": "Ordinary help. bootstrap-records-project must NOT fire.",
+      "expectations": [
+        "Overwhelm alone is not a records project - no ongoing case.",
+        "Does not propose scaffolding a vault"
+      ]
+    },
+    {
+      "id": 21,
+      "expect_skill": null,
+      "prompt": "Help me get on top of my email backlog.",
+      "expected_output": "Ordinary help. bootstrap-records-project must NOT fire.",
+      "expectations": [
+        "'Get on top of' must not be enough on its own.",
+        "Does not propose scaffolding a vault"
+      ]
+    },
+    {
+      "id": 22,
+      "expect_skill": null,
+      "prompt": "Can you organise my photos by year?",
+      "expected_output": "Ordinary help. bootstrap-records-project must NOT fire.",
+      "expectations": [
+        "'Organise' must not be enough on its own.",
+        "Does not propose scaffolding a vault"
+      ]
     }
   ]
 }
