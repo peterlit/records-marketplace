@@ -68,6 +68,9 @@ if not md:
     fails.append(f"no markdown files found under {root} - scaffold did not run?")
 # A non-English project must carry its standing language rule in CLAUDE.md; without it
 # every future session silently reverts to English.
+if os.path.isfile(os.path.join(root, ".preflight-canary")):
+    fails.append(".preflight-canary left behind - preflight could not self-delete under "
+                 "Cowork's deletion protection. Remove it with allow_cowork_file_delete.")
 lang = (_cfg or {}).get("language", "English")
 if lang.strip().lower() not in ("english", "en"):
     cm = os.path.join(root, "CLAUDE.md")

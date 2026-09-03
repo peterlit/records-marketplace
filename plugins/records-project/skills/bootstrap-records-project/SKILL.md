@@ -98,7 +98,10 @@ Ask these as **one or two batched multiple-choice rounds**, not an interrogation
 python3 <scripts>/preflight.py "<target>"
 ```
 
-It writes a canary, reads it back, checks the size is non-zero, and deletes it. Every one of
+It writes a canary, reads it back, checks the size is non-zero, and deletes it. **Under Cowork's
+file-deletion protection the delete will fail** — that is expected, preflight warns and still
+exits 0. Remove `.preflight-canary` with `allow_cowork_file_delete` before handing over; the
+validator now fails if you forget. Every one of
 those checks corresponds to a real failure that otherwise shows up as *a command that runs for
 fifteen minutes and produces an empty folder*. **A correct scaffold takes about 0.03 seconds and
 writes ~31 files.** Nothing on the happy path takes minutes. If something is taking minutes it
@@ -111,9 +114,25 @@ of files one at a time: it looks like a hang, it can silently download tens of g
 will not find the plugin anyway. Say "the plugin scripts are not reachable from this session"
 and let the person reinstall.
 
-Likewise **do not improvise around a failure** by tarring, checksumming or copying the plugin
-somewhere else. If the scripts are not where the locator expects, the install is broken and that
-is the finding to report.
+**Copying the scripts to bridge two execution contexts is allowed — sweeping is not.** These are
+different things and only one is dangerous:
+
+- ❌ **Forbidden:** searching the filesystem to *find* the plugin. It can materialise thousands
+  of cloud files and still not find it.
+- ✅ **Allowed:** once the locator has found the plugin, copying `scripts/` and `templates/`
+  into scratch space so they can run somewhere the target folder is reachable.
+
+The second case is real. In a **cloud-linked session** the plugin lives in the cloud container
+while the target folder is only reachable from the device VM — two places, no overlap. The
+scripts are stdlib-only and self-locate via `__file__`, so they run correctly from anywhere:
+
+```bash
+tar -czf /tmp/rp.tgz -C "$ROOT" scripts templates .claude-plugin   # include the manifest
+```
+
+**Include `.claude-plugin/` or `plugin_version` records as `unknown`** in the vault's
+`.records-project.json`. Verify the checksum after transfer, run everything from the copy, and
+delete the scratch copy afterwards.
 
 ## Step 2 — build
 
@@ -134,7 +153,12 @@ done
 [ -z "$ROOT" ] && for d in /sessions/*/mnt/.claude/skills/$SKILL; do
   [ -d "$d" ] && ROOT="$(cd "$d/.." && pwd)" && break
 done
-# 4. Local dev.
+# 4. Cloud-linked session: plugins sync into the cloud container, NOT into /sessions/*/mnt.
+[ -z "$ROOT" ] && for d in "$HOME"/.claude/plugins/synced/*/skills/$SKILL \
+                           "$HOME"/.claude/plugins/*/skills/$SKILL; do
+  [ -d "$d" ] && ROOT="$(cd "$d/../.." && pwd)" && break
+done
+# 5. Local dev.
 [ -z "$ROOT" ] && for d in "$HOME"/.claude/skills/*/skills/$SKILL; do
   [ -d "$d" ] && ROOT="$(cd "$d/../.." && pwd)" && break
 done

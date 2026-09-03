@@ -162,3 +162,33 @@ this is unrelated work reusing the number.)*
   canary round-trips fine; Cowork's folder picker canonicalises symlinks anyway, so the
   workaround does not survive. "Available offline" is still genuinely required.
 
+## 0.7.1 — 2026-09-02
+
+Everything here came out of one real bootstrap run on a second account, by a Claude that
+reported four findings at the end. All four were real.
+
+- **FIX (data loss): `--reconfigure` silently blanked the control panel.** It promised to
+  "carry forward everything the caller did not explicitly override" but carried forward only
+  preset, co-users and Obsidian. `--reconfigure --provider dropbox` on a real vault
+  re-rendered `CLAUDE.md` with subject "the subject", no advisors, no decision-maker and
+  conservatism reset — **the subject's name simply disappeared.** Cause was structural: `ctx`
+  was built from the parsed args before the reconfigure block ran, so restoration was a few
+  piecemeal patches instead of the default. Restoration now happens immediately after
+  `parse_args`, driven by which flags actually appear in `sys.argv`, and `_persisted()` is now
+  the single definition of what a vault remembers about itself — every field used to render
+  `CLAUDE.md` is stored. A bare `--reconfigure` is now a verified byte-for-byte no-op across
+  all 31 files. *An earlier "verified: touches no content" check passed because it re-supplied
+  every flag — the one case that cannot fail.*
+- **FIX: the locator missed cloud-linked sessions entirely.** There the plugin lives in the
+  cloud container (`~/.claude/plugins/synced/<id>/`) while the target folder is reachable only
+  from the device VM. None of the four strategies fired on either side. Added a fifth.
+- **CORRECTS 0.7.0's "never copy the plugin" rule, which was wrong.** It conflated two
+  different things and would have blocked the workaround that made the run succeed. Sweeping
+  the filesystem to *find* the plugin stays forbidden; copying `scripts/` and `templates/`
+  into scratch to bridge two execution contexts is legitimate and now documented — including
+  packing `.claude-plugin/` so the version is not lost.
+- **`--plugin-version`** for bridged runs, which otherwise stamp `plugin_version: unknown`.
+- **A leftover `.preflight-canary` is now a validation failure.** Under Cowork's deletion
+  protection preflight cannot remove its own canary; it warns and exits 0, which is correct,
+  but the file stayed behind. Better to fail loudly than leave litter in someone's vault.
+

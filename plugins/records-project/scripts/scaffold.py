@@ -8,7 +8,7 @@ not exist in the Cowork sandbox.
       --advisor "Dr. Chen:cardiologist" --advisor "Dr. Okafor:PCP" \
       --decision-maker "Jane Doe" --conservatism conservative --obsidian
 """
-import os, re, sys, json, argparse, datetime
+import sys, os, re, json, argparse, datetime
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TPL = os.path.join(ROOT, "templates")
@@ -91,6 +91,28 @@ def obsidian_config(target):
        "enableCollapsing": False, "excludeFolders": [], "autoCreate": False})
 
 
+
+def _persisted(a, prov, provider, co, shared, version):
+    """Everything a vault must remember to rebuild its own CLAUDE.md.
+
+    If a field is used to render CLAUDE.md it MUST be here, or --reconfigure will
+    silently replace it with a placeholder. That bug shipped once; it blanked the
+    subject's name on a real project.
+    """
+    return {
+        "plugin_version": getattr(a, "plugin_version", None) or version,
+        "created": datetime.date.today().isoformat(),
+        "preset": a.preset, "subject": a.subject, "dob": a.dob, "title": a.title,
+        "operator": a.operator, "decision_maker": a.dm,
+        "advisors": list(a.advisor), "conservatism": a.conservatism,
+        "situation": a.situation, "language": a.language,
+        "snapshot_trigger": a.snapshot, "provider": prov,
+        "store_sensitive": a.store_sensitive, "memory": a.memory,
+        "obsidian": a.obsidian, "co_users": co, "shared": shared,
+        "conflict_patterns": provider["conflict_patterns"],
+    }
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("target")
@@ -116,6 +138,9 @@ def main():
     ap.add_argument("--cloud", default="", help="deprecated free-text alias for --provider")
     ap.add_argument("--obsidian", action="store_true")
     ap.add_argument("--memory", action="store_true", help="explicit consent to seed memory")
+    ap.add_argument("--plugin-version", dest="plugin_version", default=None,
+                    help="Stamp this version instead of reading .claude-plugin/plugin.json. "
+                         "For bridged runs where only scripts/ and templates/ were copied.")
     ap.add_argument("--language", default="English",
                     help="Language for all PROSE in the project (Master Summary, question "
                          "lists, folder notes, and Claude's narration in future chats). "
@@ -129,6 +154,39 @@ def main():
                          "chronicle. Refuses to run unless .records-project.json exists, "
                          "so it can never be mistaken for a fresh scaffold over live data.")
     a = ap.parse_args()
+
+    # --reconfigure must not silently blank the control panel. `ctx` is derived
+    # from `a` further down, so restoration has to happen HERE, before any of it.
+    # Anything the caller did not name on the command line comes back from disk.
+    if a.reconfigure:
+        _cfg_p = os.path.join(a.target, ".records-project.json")
+        if not os.path.isfile(_cfg_p):
+            print(f"FAIL --reconfigure needs an existing .records-project.json at {a.target}")
+            print("     Refusing: without it this cannot be distinguished from a fresh scaffold.")
+            return 2
+        _old = json.load(open(_cfg_p, encoding="utf-8"))
+        _given = {t.split("=", 1)[0].lstrip("-").replace("-", "_")
+                  for t in sys.argv[1:] if t.startswith("--")}
+        # (command-line flag, argparse dest, key in .records-project.json)
+        for _flag, _attr, _key in (
+                ("subject", "subject", "subject"), ("dob", "dob", "dob"),
+                ("title", "title", "title"), ("operator", "operator", "operator"),
+                ("decision_maker", "dm", "decision_maker"),
+                ("conservatism", "conservatism", "conservatism"),
+                ("situation", "situation", "situation"), ("preset", "preset", "preset"),
+                ("language", "language", "language"), ("snapshot", "snapshot", "snapshot_trigger"),
+                ("provider", "provider", "provider"),
+                ("store_sensitive", "store_sensitive", "store_sensitive"),
+                ("memory", "memory", "memory"), ("obsidian", "obsidian", "obsidian"),
+                ("advisor", "advisor", "advisors"), ("co_user", "co_users", "co_users")):
+            if _flag in _given:
+                continue
+            _v = _old.get(_key)
+            if _v in (None, ""):
+                continue
+            setattr(a, _attr, list(_v) if isinstance(_v, list) else _v)
+        if "provider" not in _given:
+            a.cloud = None
 
     # Provider profile. --cloud is the old free-text flag; map it onto a profile.
     prov = a.provider
@@ -235,9 +293,7 @@ def main():
         eng = write(os.path.join(a.target, "CLAUDE.md"),
                     render(open(os.path.join(TPL, "core", "CLAUDE.md.tmpl"),
                                 encoding="utf-8").read(), ctx))
-        cfg = dict(old, plugin_version=PLUGIN_VERSION, provider=prov, shared=shared,
-                   co_users=co, obsidian=a.obsidian, snapshot_trigger=a.snapshot,
-                   conflict_patterns=provider["conflict_patterns"],
+        cfg = dict(old, **_persisted(a, prov, provider, co, shared, PLUGIN_VERSION),
                    reconfigured=today)
         with open(cfg_path, "w", encoding="utf-8") as f:
             json.dump(cfg, f, indent=2); f.write("\n")
@@ -288,19 +344,7 @@ def main():
     if shared:
         os.makedirs(os.path.join(a.target, "_sync"), exist_ok=True)
 
-    cfg = {
-        "language": a.language,
-        "plugin_version": PLUGIN_VERSION,
-        "created": today,
-        "preset": a.preset,
-        "provider": prov,
-        "shared": shared,
-        "co_users": co,
-        "decision_maker": dm,
-        "obsidian": a.obsidian,
-        "snapshot_trigger": a.snapshot,
-        "conflict_patterns": provider["conflict_patterns"],
-    }
+    cfg = _persisted(a, prov, provider, co, shared, PLUGIN_VERSION)
     with open(os.path.join(a.target, ".records-project.json"), "w", encoding="utf-8") as f:
         json.dump(cfg, f, indent=2); f.write("\n")
 

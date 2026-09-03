@@ -89,6 +89,15 @@ failure with a specific message, and `bootstrap-records-project` Step 1.5 now fo
 improvisations — no filesystem sweeps, and never across `/sessions/*/mnt/`, which can force a
 cloud provider to materialise thousands of files.
 
+## The `--reconfigure` lesson (2026-09-02)
+
+`--reconfigure` shipped able to blank a real project's `CLAUDE.md` — subject replaced by a
+placeholder, advisors gone. It had been "verified" by re-supplying every flag, which is the
+one case that cannot fail. **When a function's contract is "preserve what I didn't mention",
+the only meaningful test is the one that mentions nothing.** `_persisted()` is now the single
+source of what a vault remembers; if a field renders into `CLAUDE.md` and is not in there, the
+bug is back.
+
 ## What's next
 
 - **Refresh the installed plugin and use it for real.** The Update button greys out because
