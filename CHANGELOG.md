@@ -50,3 +50,12 @@
   file immediately before writing it, and merging rather than overwriting if it changed.
   This is what actually makes concurrent editing safe; the markers only make collisions
   rarer and visible.
+
+## 0.4.1 — 2026-09-02
+
+- **`records-export-doc`** — renders any project file as a formatted Google Doc on
+  demand, for taking to an appointment or sharing. Kept from the reverted 0.5.x work,
+  where it was bundled with the link-style experiment but is independent of it.
+  The skill is explicit that the Doc is a **dated snapshot, never the record**: Docs
+  cannot be edited through the connector, and on the Drive mount they are ~170-byte
+  pointers — invisible to grep, to Obsidian, and to snapshots.
