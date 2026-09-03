@@ -66,6 +66,17 @@ for c in check_sync_conflicts(root, _pats):
     fails.append(f"SYNC CONFLICT COPY: {c}  <- resolve before reconciling")
 if not md:
     fails.append(f"no markdown files found under {root} - scaffold did not run?")
+# A non-English project must carry its standing language rule in CLAUDE.md; without it
+# every future session silently reverts to English.
+lang = (_cfg or {}).get("language", "English")
+if lang.strip().lower() not in ("english", "en"):
+    cm = os.path.join(root, "CLAUDE.md")
+    txt = open(cm, encoding="utf-8").read() if os.path.isfile(cm) else ""
+    if "## Language" not in txt or lang not in txt:
+        fails.append(
+            f"config says language={lang} but CLAUDE.md has no matching '## Language' "
+            f"section - future chats will revert to English")
+
 print(f"  checked {len(md)} notes")
 for f in fails: print("  FAIL", f)
 print("  vault valid" if not fails else f"  {len(fails)} problem(s)")

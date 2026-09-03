@@ -34,6 +34,28 @@ advisors to fill them.
 
 If a `CLAUDE.md` and `01 Master/` already exist, this project is already set up — don't re-bootstrap it. Read the existing `CLAUDE.md` and follow it instead.
 
+## Step 0 — language, before anything else
+
+**If the person is writing to you in a language other than English, do not silently continue in
+English and do not silently continue in theirs.** Ask once, in *their* language, as the very
+first thing:
+
+> Should this project be kept in <their language>, or in English?
+
+Then pass `--language "<answer>"`. It is written into `.records-project.json` and into the
+generated `CLAUDE.md`, so **every future chat keeps writing in that language** — which is the
+whole point. Getting it from the conversation alone is not enough; a later session starts with
+no memory of how this one went.
+
+Conduct the rest of the interview in whichever language they chose.
+
+Two things to say plainly if they pick a non-English language:
+
+- Folder and file names stay English (`01 Master`, `03 Inbox`) because the scripts and skills
+  match on those exact strings. Their language goes in the folder note headings and all prose.
+- Source documents are read in whatever language they are written; only the record is
+  translated.
+
 ## Step 1 — interview
 
 Ask these as **one or two batched multiple-choice rounds**, not an interrogation. Infer what you reasonably can from what they've already said and confirm rather than asking cold. If they've described a cancer diagnosis, don't ask which domain.
@@ -111,6 +133,37 @@ python3 <scripts>/scaffold.py "<vault>" --reconfigure --provider dropbox
 ```
 
 That rewrites only `CLAUDE.md` and `.records-project.json`; **no content is touched** — no folder notes, no Master files, no chronicle. Preset, co-users and Obsidian setting carry forward unless overridden. It refuses to run without an existing `.records-project.json`, so it can never be mistaken for a fresh scaffold over live data.
+
+## Step 2b — translate the seeded prose (non-English projects only)
+
+`scaffold.py` renders from English templates, so a `--language Polish` vault still lands with
+English folder notes and START HERE. **The person's first look at their new project would be in
+the wrong language.** Translate the seeded prose in place, with the file tools, before handing
+over:
+
+- `00 START HERE.md`
+- every folder note (`01 Master/01 Master.md`, `03 Inbox/03 Inbox.md`, …)
+- `01 Master/Master Summary.md`, `01 Master/Settled — do not re-open.md`
+- each `01 Master/Questions — <advisor>.md`
+- `CLAUDE.md` — **ask first.** It is the control panel and the engine. An operator working in
+  their own language wants it readable; but a mistranslation there changes behaviour rather than
+  just wording. Offer it, translate it only on a yes, and if in doubt leave it English and say
+  so.
+
+**Leave these byte-for-byte identical — translating any of them breaks filing:**
+
+| Never translate | Why |
+|---|---|
+| File names and folder names on disk | `scaffold.py`, `validate_vault.py`, the snapshot trigger and the skill descriptions all match these exact strings |
+| Anything inside `[[ ]]`, **including the alias after `\|`** | Simplest safe rule; a translated alias is fine in theory but one slip silently breaks the link |
+| Anything in backticks — paths, flags, filenames | They are literals |
+| `.records-project.json` | Machine-readable |
+| Dates, units, marker names, drug names, quoted source text | Quoted material keeps its original language |
+
+Headings that are *not* wikilink targets can be translated freely.
+
+Re-run the validator afterwards — it checks that every wikilink still resolves, which is exactly
+the thing a careless translation breaks.
 
 ## Step 3 — verify, always
 

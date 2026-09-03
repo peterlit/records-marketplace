@@ -116,6 +116,11 @@ def main():
     ap.add_argument("--cloud", default="", help="deprecated free-text alias for --provider")
     ap.add_argument("--obsidian", action="store_true")
     ap.add_argument("--memory", action="store_true", help="explicit consent to seed memory")
+    ap.add_argument("--language", default="English",
+                    help="Language for all PROSE in the project (Master Summary, question "
+                         "lists, folder notes, and Claude's narration in future chats). "
+                         "Structural folder and file names always stay English - the "
+                         "scripts, the validator and the skill descriptions key off them.")
     ap.add_argument("--store-sensitive", action="store_true")
     ap.add_argument("--reconfigure", action="store_true",
                     help="Rewrite CLAUDE.md and .records-project.json for an EXISTING "
@@ -171,6 +176,8 @@ def main():
         "memory_off": not a.memory, "store_sensitive": a.store_sensitive,
         "gdrive": prov == "gdrive",
         "has_mount_caveat": bool(provider["mount_caveat"]),
+        "LANGUAGE": a.language,
+        "translated": a.language.strip().lower() not in ("english", "en"),
     }
 
     # Co-users are PEERS. Two or more switches the engine into shared mode.
@@ -282,6 +289,7 @@ def main():
         os.makedirs(os.path.join(a.target, "_sync"), exist_ok=True)
 
     cfg = {
+        "language": a.language,
         "plugin_version": PLUGIN_VERSION,
         "created": today,
         "preset": a.preset,

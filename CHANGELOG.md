@@ -96,10 +96,21 @@ this is unrelated work reusing the number.)*
 - **`file-to-records` description widened** — it shared *zero* vocabulary with "the
   cardiologist just called and changed the dose", a core use case. Now covers verbal
   reports, medication and dose changes, symptoms and decisions, not only files arriving.
-- **`bootstrap-records-project` description narrowed** — it was deliberately pushy and
-  scored high on ordinary tidying requests. Now requires an ONGOING situation with
-  advisors and decisions, with an explicit DO NOT USE clause for one-off tidying, and
-  "if unsure, ask before scaffolding anything".
+- **`bootstrap-records-project` is explicit-invocation-only.** First narrowed (ongoing
+  situation + advisors + a DO NOT USE clause), then taken all the way: the description now
+  tells the model never to select it on its own initiative. Rationale — a project is
+  bootstrapped once or twice a year against hundreds of unrelated chats, so the expected
+  cost of a false positive dwarfs the convenience of a natural-language trigger. Nothing is
+  lost: inside a project the generated `CLAUDE.md` runs the workflow. Evals 1–3 were flipped
+  from positives to negatives to lock this in.
+- **The other skills are scoped to inside-a-project**, not silenced. `file-to-records`,
+  `records-critique` and `records-gap-audit` still fire automatically — but only where a
+  `CLAUDE.md` + `01 Master/` or `.records-project.json` says a project exists. The generated
+  `CLAUDE.md` gained a **Skills table** naming each one against its trigger, so filing is
+  driven by the folder rather than by a description happening to match the user's wording.
+  It also states that if the plugin is absent, the steps are written out inline and must be
+  done anyway — a project whose filing silently stops because a plugin was uninstalled would
+  be worse than no plugin.
 - **Removed `lint_triggering.py`.** A static word-overlap analyzer was built and then
   deleted the same day. It found one real bug, but tuning it three times produced
   contradictory guidance, and it ended up ranking `records-sync-status` — a skill about
@@ -109,3 +120,27 @@ this is unrelated work reusing the number.)*
   that phrase. **A metric that inverts on a correct fix is worse than no metric**, because
   it invites optimising against noise. Triggering needs Claude in the loop; there is no
   cheap proxy.
+
+## 0.7.0 — 2026-09-02
+
+- **`--language`: structure in English, prose in the user's language.** A records project
+  can now be kept in any language. The choice is written to `.records-project.json` *and*
+  to a `## Language` section in the generated `CLAUDE.md` — which is the point. Asking
+  during the interview is not enough; a later session starts with no memory of that
+  conversation and silently reverts to English. Folder and file names stay English because
+  `scaffold.py`, `validate_vault.py`, the snapshot trigger and the skill descriptions all
+  match those exact strings.
+- **Bootstrap Step 0 — ask, don't guess.** If the person writes in another language, ask
+  once *in their language* whether to keep the project in it. Previously nothing anywhere
+  handled language; Claude sometimes mirrored the user and sometimes didn't, which read as
+  an intermittent bug rather than the absent feature it was.
+- **Bootstrap Step 2b — translate the seeded prose.** Templates render in English, so a
+  non-English vault was landing with English folder notes and START HERE: the person's
+  first look at their own project in the wrong language. Now translated in place, with a
+  never-translate list — file and folder names, anything inside `[[ ]]` *including the
+  alias after the pipe*, anything backticked, and quoted source material. `CLAUDE.md`
+  translation is opt-in: it is the engine, so a mistranslation changes behaviour rather
+  than wording.
+- **Validator catches language drift.** If the config says a language but `CLAUDE.md` has
+  no matching `## Language` section, validation fails — because the failure mode is silent
+  and only becomes visible after months of records have accumulated in the wrong language.

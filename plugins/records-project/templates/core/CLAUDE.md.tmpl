@@ -54,7 +54,22 @@ So: when you read a Master file intending to change it, **note its size and modi
 This has no race window and works whether or not either session saw the other's marker.
 {{/if}}
 
-## Classify each message, then act
+{{#if translated}}## Language
+
+**This project is kept in {{LANGUAGE}}.** Write in {{LANGUAGE}} throughout — every summary,
+question list, critique, gap audit, timeline entry and chat reply, in this and every future
+session. Do not switch to English because a source document is in English; read the document in
+whatever language it is written and write the record in {{LANGUAGE}}.
+
+**Structural names stay as they are** — `01 Master`, `03 Inbox`, `Master Summary.md` and the rest.
+The scripts, the validator and the plugin skills all key off those exact strings, so renaming
+them breaks filing and snapshots. Put the {{LANGUAGE}} name in the folder note heading instead,
+where it costs nothing.
+
+Quoted material keeps its original language; a lab report in English is quoted in English and
+then discussed in {{LANGUAGE}}.
+
+{{/if}}## Classify each message, then act
 
 **Type A — NEW {{DOMAIN_WORD}} CONTENT** (a result, a decision, advice from {{AN_ADVISOR}}, a status change):
 1. Append a concise entry to [[02 Chronicle/Prompt Log|Prompt Log]] — `date · topic · one-line gist · files touched`.
