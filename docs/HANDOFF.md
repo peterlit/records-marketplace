@@ -44,6 +44,13 @@ python3 $P/scripts/validate_vault.py /tmp/v               # must print "vault va
 | **The Drive *connector* cannot edit file contents** | `update_file` handles title and parentId only. And **reads are escaped** — `read_file_content` returns a "natural language representation" (`\# Heading`, `\[\[link\]\]`), not bytes. Storage is faithful; only the connector's read path mangles it. Consequence: **a filesystem-less surface (Slack) can comprehend and append, never curate.** |
 | **Markdown survives on Drive** | With `disableConversionToGoogleType: true`, `.md` stays `text/markdown` rather than becoming a Google Doc. |
 | **Frontmatter portability** | Outside Claude Code only `name`, `description`, `license`, `compatibility`, `metadata`, `allowed-tools` are legal. Any other key is a **hard error**, not a warning. `lint_frontmatter.py` enforces this. |
+| **Google Drive auto-linkifies path-shaped text** | In Drive's `.md` plain-text preview, `[Conditions](Conditions/Conditions.md)` renders as a clickable, **broken** `http://conditions/Conditions.md`. Wikilinks are ugly there but **inert**, so nothing breaks. See "Decisions already taken" below — link-style options were built and deliberately reverted. |
+
+## Decisions already taken — don't redo these
+
+**Link style: wikilinks only.** `--links wiki|markdown|plain` was built (v0.5.0/0.5.1) and **reverted** (0.4.0 + `records-export-doc`). Markdown links are *worse* than wikilinks on Drive for the reason in the table above, and `plain` only looked marginally nicer while losing Obsidian navigation and Folder Notes click-through entirely. The maintainer judged the option not worth its complexity. **If the "markdown looks ugly in Drive" complaint comes back, the answer is `records-export-doc`** — render a formatted Google Doc on demand — not a link-style setting.
+
+**Google Docs as storage: no.** Verified by creating one: on the Drive mount a Doc is a ~170-byte `.gdoc` pointer, not content. `grep` can't search it, Obsidian can't read it, the connector can't edit it, and **`snapshot.py` would archive only pointers and report success** — backups containing no data. Docs are for *export*, never for storage.
 
 ## Hard-won rules the generated projects depend on
 
