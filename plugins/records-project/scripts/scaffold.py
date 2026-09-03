@@ -54,6 +54,60 @@ def render(text, ctx):
     return re.sub(r"\{\{(\w+)\}\}", var, text)
 
 
+
+# ---------- link style: wiki (Obsidian default) or standard markdown -------
+# Templates are authored ONCE in wikilink form; markdown mode is a render-time
+# conversion. That keeps a single source of truth for every template.
+
+WIKILINK = re.compile(r"\[\[([^\]|]+?)(?:\|([^\]]+?))?\]\]")
+
+
+def build_link_map(folders, root_files):
+    """target-as-written -> vault-relative path. Folder notes are addressable by
+    their bare name ("01 Master") and by their full relative path."""
+    m = {}
+    for rel in folders:
+        name = os.path.basename(rel)
+        note = f"{rel}/{name}.md"
+        m.setdefault(name, note)
+        m.setdefault(rel, note)
+    for rf in root_files:                       # e.g. "MEMORY.md", "00 START HERE.md"
+        stem = rf[:-3] if rf.endswith(".md") else rf
+        m.setdefault(stem, rf)
+    return m
+
+
+def to_plain_text(text):
+    """Strip link syntax entirely, keeping the human-readable label.
+
+    Google Drive's plain-text preview auto-linkifies anything that looks like a
+    path, so [Conditions](Conditions/Conditions.md) becomes a clickable and
+    BROKEN http://conditions/Conditions.md. Wikilinks are inert but ugly. For a
+    vault read primarily in Drive, no link syntax at all is the honest answer.
+    """
+    def repl(m):
+        target, alias = m.group(1).strip(), (m.group(2) or "").strip()
+        return alias or target.split("/")[-1]
+    return WIKILINK.sub(repl, text)
+
+
+def to_markdown_links(text, from_dir, link_map, unresolved):
+    """Rewrite [[target|alias]] as [alias](relative/path.md), URL-encoding spaces."""
+    def repl(m):
+        target, alias = m.group(1).strip(), (m.group(2) or "").strip()
+        label = alias or target.split("/")[-1]
+        dest = link_map.get(target)
+        if dest is None:                        # a plain file reference like "01 Master/Master Summary"
+            cand = target + ".md"
+            dest = cand if cand in link_map.values() else None
+        if dest is None:
+            unresolved.add(target)
+            return m.group(0)                   # leave as-is; validate_vault will flag it
+        rel = os.path.relpath(dest, from_dir or ".")
+        return f"[{label}]({rel.replace(' ', '%20')})"
+    return WIKILINK.sub(repl, text)
+
+
 def write(path, text):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
@@ -70,13 +124,13 @@ def folder_note(rel, desc, children):
             "*Folder note - Obsidian's Folder Notes plugin binds this to the folder itself.*\n")
 
 
-def obsidian_config(target):
+def obsidian_config(target, markdown_links=False):
     od = os.path.join(target, ".obsidian", "plugins", "folder-notes")
     os.makedirs(od, exist_ok=True)
     j = lambda p, o: json.dump(o, open(p, "w", encoding="utf-8"), indent=2)
     j(os.path.join(target, ".obsidian", "community-plugins.json"), ["folder-notes"])
     j(os.path.join(target, ".obsidian", "app.json"),
-      {"alwaysUpdateLinks": True, "newLinkFormat": "shortest", "useMarkdownLinks": False})
+      {"alwaysUpdateLinks": True, "newLinkFormat": "shortest", "useMarkdownLinks": markdown_links})
     j(os.path.join(od, "data.json"),
       {"storageLocation": "insideFolder", "folderNoteName": "{{folder_name}}",
        "newFolderNoteName": "{{folder_name}}", "folderNoteType": ".md",
@@ -106,6 +160,13 @@ def main():
                     choices=["master", "always", "never"])
     ap.add_argument("--cloud", default="", help="iCloud|Dropbox|Google Drive|OneDrive")
     ap.add_argument("--obsidian", action="store_true")
+    ap.add_argument("--links", default="wiki", choices=["wiki", "markdown", "plain"],
+                    help="wiki = [[Obsidian wikilinks]] (default; inert but bracket-y "
+                         "outside Obsidian). markdown = [standard](links.md), good for "
+                         "GitHub and markdown viewers - but NOT Google Drive, whose text "
+                         "preview auto-linkifies relative paths into broken http:// URLs. "
+                         "plain = no link syntax at all, just readable names; the right "
+                         "choice when people read the vault in Drive's browser preview.")
     ap.add_argument("--memory", action="store_true", help="explicit consent to seed memory")
     ap.add_argument("--store-sensitive", action="store_true")
     a = ap.parse_args()
@@ -163,12 +224,34 @@ def main():
     folders = dict(CORE_FOLDERS)
     for k, v in preset["folders"].items():
         folders[k] = v
+
+    # Link rewriting needs to know every note this run will create.
+    root_files = ["00 START HERE.md", "CLAUDE.md", "MEMORY.md"]
+    link_map = build_link_map(folders, root_files)
+    link_map["MEMORY"] = "MEMORY.md"
+    link_map["memory"] = "memory/memory.md"
+    for rel in ("01 Master/Master Summary", "01 Master/Settled — do not re-open",
+                "02 Chronicle/Timeline", "02 Chronicle/Prompt Log"):
+        link_map[rel] = rel + ".md"
+    for n, r in [s.split(":", 1) if ":" in s else (s, "") for s in a.advisor]:
+        link_map[f"01 Master/Questions — {n.strip()}"] = f"01 Master/Questions — {n.strip()}.md"
+    unresolved = set()
+    md_links = (a.links == "markdown")
+
+    def emit(dest_rel, text):
+        """Single write path so link conversion can never be forgotten."""
+        if a.links == "markdown":
+            text = to_markdown_links(text, os.path.dirname(dest_rel), link_map, unresolved)
+        elif a.links == "plain":
+            text = to_plain_text(text)
+        return write(os.path.join(a.target, dest_rel), text)
+
     made = 0
     for rel, desc in folders.items():
         d = os.path.join(a.target, rel); os.makedirs(d, exist_ok=True)
         kids = [os.path.basename(o) for o in folders if os.path.dirname(o) == rel]
-        write(os.path.join(d, f"{os.path.basename(rel)}.md"),
-              folder_note(rel, desc.format(advisor=preset["advisor_word"]), kids))
+        emit(os.path.join(rel, f"{os.path.basename(rel)}.md"),
+             folder_note(rel, desc.format(advisor=preset["advisor_word"]), kids))
         made += 1
 
     # core templates
@@ -179,14 +262,13 @@ def main():
             rel = os.path.relpath(src, os.path.join(TPL, "core"))[:-5]
             if rel.startswith("_sync") and not shared:
                 continue          # presence markers are a shared-mode concept
-            write(os.path.join(a.target, rel),
-                  render(open(src, encoding="utf-8").read(), ctx))
+            emit(rel, render(open(src, encoding="utf-8").read(), ctx))
 
     # one question list per advisor
     qt = open(os.path.join(pdir, "Questions.md.tmpl"), encoding="utf-8").read()
     for n, r in advisors:
         c = dict(ctx, ADVISOR_NAME=n.strip(), ADVISOR_ROLE=r.strip(), advisor_role=bool(r.strip()))
-        write(os.path.join(a.target, "01 Master", f"Questions — {n.strip()}.md"), render(qt, c))
+        emit(os.path.join("01 Master", f"Questions — {n.strip()}.md"), render(qt, c))
 
     # trend tables
     for fn, header in preset["trends"].items():
@@ -200,9 +282,16 @@ def main():
         os.makedirs(os.path.join(a.target, "_sync"), exist_ok=True)
 
     if a.obsidian:
-        obsidian_config(a.target)
+        obsidian_config(a.target, markdown_links=(a.links == "markdown"))
+        if a.links == "plain":
+            print("  NOTE: --links plain removes link syntax, so Obsidian navigation "
+                  "and Folder Notes click-through will not work. Choose wiki if "
+                  "Obsidian is the primary reader.")
 
-    print(f"preset={a.preset} folders={made} advisors={len(advisors)} "
+    if unresolved:
+        print("  WARNING unresolved link targets (left as wikilinks): "
+              + ", ".join(sorted(unresolved)))
+    print(f"preset={a.preset} links={a.links} folders={made} advisors={len(advisors)} "
           f"conservatism={a.conservatism} obsidian={a.obsidian} memory={a.memory}")
     return 0
 

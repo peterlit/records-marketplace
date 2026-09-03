@@ -36,12 +36,17 @@ Ask these as **one or two batched multiple-choice rounds**, not an interrogation
 
 9. **Obsidian?** → `--obsidian`. Default **on** if they use it or don't know; harmless if unused. It installs the Folder Notes plugin config and writes a folder note per folder.
 10. **Cloud-synced folder?** → `--cloud iCloud|Dropbox|Google Drive|OneDrive`. If yes, the generated `CLAUDE.md` gains the sync hazard rules — build zips in scratch, verify no 0-byte copies, and use `allow_cowork_file_delete` when `rm` is refused (deletion protection is Cowork's, not the provider's). **Check the path for `iCloud`, `Dropbox`, `OneDrive` or `Google Drive` and confirm rather than asking blind.**
-11. **Snapshot trigger** → `--snapshot master|always|never`. Default `master` (only when `01 Master/` changes) — this is the setting that stops snapshot spam.
+11. **Link style** → `--links wiki|markdown|plain`. Default `wiki`.
+    - **`wiki`** — `[[Obsidian wikilinks]]`. Correct whenever **Obsidian is the primary reader**. Outside Obsidian they look bracket-y, but they are **inert** — nothing breaks.
+    - **`plain`** — no link syntax, just readable names. ⚠️ **This is the right choice for a vault people read in Google Drive's browser preview.** Drive renders `.md` as plain text *and auto-linkifies anything path-shaped*, so `[Conditions](Conditions/Conditions.md)` becomes a clickable, broken `http://conditions/Conditions.md`. Plain text has nothing to break. Cost: no Obsidian navigation or Folder Notes click-through — so only choose it when Obsidian is not the main way people read the vault.
+    - **`markdown`** — `[standard](links.md)`. Good for GitHub or a markdown viewer. **Do not use it for Google Drive**, for the reason above.
+    *If the person uses both Obsidian and Drive, prefer `wiki` and use `records-export-doc` when they want something readable in a browser.*
+12. **Snapshot trigger** → `--snapshot master|always|never`. Default `master` (only when `01 Master/` changes) — this is the setting that stops snapshot spam.
 
 **Ask explicitly, never assume — these two are consent questions:**
 
-12. **May Claude store this in memory across chats?** → `--memory`. **Only pass this flag on an explicit yes.** Without it the generated `CLAUDE.md` tells Claude to skip memory updates. Say what it means: faster context in future chats, at the cost of the information persisting outside the folder.
-13. **Sensitive personal data?** → `--store-sensitive`. For health projects, ask directly whether they consent to health details being stored in the project. Records the consent date in `CLAUDE.md`.
+13. **May Claude store this in memory across chats?** → `--memory`. **Only pass this flag on an explicit yes.** Without it the generated `CLAUDE.md` tells Claude to skip memory updates. Say what it means: faster context in future chats, at the cost of the information persisting outside the folder.
+14. **Sensitive personal data?** → `--store-sensitive`. For health projects, ask directly whether they consent to health details being stored in the project. Records the consent date in `CLAUDE.md`.
 
 ## Step 2 — build
 
@@ -78,7 +83,7 @@ python3 <scripts>/scaffold.py "<target>" \
   --preset health --subject "Jane Doe" --dob 1968-03-14 \
   --operator "Maria" --decision-maker "Jane Doe" \
   --advisor "Dr. Chen:cardiologist" --advisor "Dr. Okafor:PCP" \
-  --conservatism conservative --snapshot master --cloud Dropbox --obsidian \
+  --conservatism conservative --snapshot master --cloud Dropbox --obsidian --links markdown \
   --situation "Newly diagnosed atrial fibrillation; anticoagulation decision pending."
 ```
 
