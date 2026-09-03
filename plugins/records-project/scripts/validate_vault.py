@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Post-scaffold checks: folder notes present & correctly named, wikilinks resolve, no 0-byte files."""
-import sys, os, re, glob, urllib.parse
+import sys, os, re, glob
 
 SYNC_CONFLICT = re.compile(
     r"\(conflicted copy[^)]*\)|conflicted copy|-conflict-|\(Case Conflict\)|"
@@ -39,24 +39,10 @@ for p in md:
             fails.append(f"UNRENDERED TEMPLATE SYNTAX: {os.path.relpath(p,root)}:{n}: {l.strip()[:60]}")
 for p in md:
     if os.path.getsize(p) == 0: fails.append(f"ZERO-BYTE: {os.path.relpath(p,root)}")
-    txt = open(p, encoding="utf-8").read()
-    # wikilinks
-    for link in re.findall(r"\[\[([^\]|]+)", txt):
+    for link in re.findall(r"\[\[([^\]|]+)", open(p,encoding="utf-8").read()):
         t = link.split("/")[-1].strip()
         if t not in stems and link.strip() not in stems:
             fails.append(f"broken wikilink [[{link}]] in {os.path.relpath(p,root)}")
-    # standard markdown links - resolve relative to the containing file.
-    # Without this, a vault built with --links markdown was validated VACUOUSLY:
-    # no wikilinks present meant no link checks ran at all.
-    for label, href in re.findall(r"\[([^\]]+)\]\(([^)]+)\)", txt):
-        if href.startswith(("http://", "https://", "mailto:", "#")):
-            continue
-        target = urllib.parse.unquote(href.split("#")[0])
-        if not target.endswith(".md"):
-            continue
-        resolved = os.path.normpath(os.path.join(os.path.dirname(p), target))
-        if not os.path.isfile(resolved):
-            fails.append(f"broken markdown link [{label}]({href}) in {os.path.relpath(p,root)}")
 for c in check_sync_conflicts(root):
     fails.append(f"SYNC CONFLICT COPY: {c}  <- resolve before reconciling")
 if not md:

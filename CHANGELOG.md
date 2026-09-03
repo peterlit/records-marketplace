@@ -50,33 +50,3 @@
   file immediately before writing it, and merging rather than overwriting if it changed.
   This is what actually makes concurrent editing safe; the markers only make collisions
   rarer and visible.
-
-## 0.5.0 — 2026-09-02
-
-- **`--links wiki|markdown`.** Templates are still authored once in wikilink form;
-  markdown is a render-time conversion with correctly computed relative paths and
-  URL-encoded spaces. `[Master Summary](01%20Master/Master%20Summary.md)` reads as
-  normal prose in a browser's plain-text preview while Obsidian still resolves it
-  (`useMarkdownLinks` is set to match). Unresolvable targets are reported, not
-  silently mangled.
-- **`validate_vault.py` now checks markdown links too.** It previously validated
-  only wikilinks, so a `--links markdown` vault passed *vacuously* — no wikilinks
-  present meant no link checking ran at all.
-- **New `records-export-doc` skill.** Renders any project file as a formatted Google
-  Doc on demand, with the constraint stated plainly: the Doc is a dated snapshot,
-  never the record. Google Docs cannot be edited via the connector, and on the Drive
-  mount they are ~170-byte pointers — invisible to grep, to Obsidian, and to
-  snapshots, which would archive the pointer and report success.
-
-## 0.5.1 — 2026-09-02
-
-- **New `--links plain`, and corrected guidance for Google Drive.** Drive renders
-  `.md` as plain text *and auto-linkifies anything path-shaped*, so a relative
-  markdown link becomes a clickable, broken `http://conditions/Conditions.md`.
-  That makes `--links markdown` actively worse than wikilinks on Drive: wikilinks
-  are ugly but inert, markdown links break when clicked. `plain` strips link
-  syntax entirely, leaving readable names with nothing to linkify.
-- Interview guidance now: **`wiki` when Obsidian is the primary reader**,
-  **`plain` when Drive's browser preview is**, `markdown` for GitHub and markdown
-  viewers but explicitly not Drive. `plain` warns that Obsidian navigation and
-  Folder Notes click-through are lost.
