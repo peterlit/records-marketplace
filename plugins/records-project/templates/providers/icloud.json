@@ -1,0 +1,17 @@
+{
+  "name": "icloud",
+  "display": "iCloud Drive",
+  "path_hint": "~/Library/Mobile Documents/com~apple~CloudDocs/<folder>",
+  "mount_caveat": "Mounts, but see hazards — this provider has caused the most trouble in practice.",
+  "offline_requirement": "Turn OFF \"Optimise Mac Storage\" for this folder, or files get evicted and read as 0 bytes.",
+  "conflict_patterns": ["\\s\\d+\\.md$", "\\.icloud$"],
+  "connector": null,
+  "connector_can_delete": false,
+  "delete_note": "No iCloud connector exists. Use `allow_cowork_file_delete`; there is no fallback.",
+  "hazards": [
+    "Cloud-only files copy as 0 BYTES and fail silently. Always verify size > 0 after any copy.",
+    "The `zip` binary fails on its rename step. Build archives in scratch with Python's zipfile, then copy in.",
+    "No connector, so deletion has no fallback path if Cowork's permission prompt is declined."
+  ],
+  "sharing": "iCloud folder sharing is possible but awkward for multi-user work. Prefer Dropbox or Drive if sharing."
+}

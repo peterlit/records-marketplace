@@ -59,3 +59,28 @@
   The skill is explicit that the Doc is a **dated snapshot, never the record**: Docs
   cannot be edited through the connector, and on the Drive mount they are ~170-byte
   pointers — invisible to grep, to Obsidian, and to snapshots.
+
+## 0.5.0 — 2026-09-02
+
+*(Version 0.5.x was previously used for a link-style experiment that was reverted;
+this is unrelated work reusing the number.)*
+
+- **Provider profiles as data** — `templates/providers/{gdrive,dropbox,icloud,onedrive,local}.json`
+  carry each provider's mount caveats, offline-mode requirement, conflict-copy patterns,
+  connector capabilities and hazards. `--provider` replaces free-text `--cloud` (kept as an
+  alias). The generated `CLAUDE.md` now warns about the hazards that actually apply: the
+  symlink requirement and .gdoc pointers for Drive, 0-byte eviction and no-connector-fallback
+  for iCloud, nothing at all for local.
+- **Vaults describe themselves** — `.records-project.json` records preset, provider, shared
+  mode, co-users, decision-maker, Obsidian and snapshot settings, plugin version, and the
+  provider's conflict patterns. `validate_vault.py` reads it instead of OR-ing every
+  provider's patterns together, which over-matched.
+- **`--reconfigure`** — move a vault between providers by rewriting only `CLAUDE.md` and
+  `.records-project.json`. **No content is touched**, verified by hashing all 29 files
+  across a migration. Refuses to run without an existing config so it cannot be mistaken
+  for a fresh scaffold over live data. All 20 provider-pair migrations pass.
+- **Fixed a validator false positive**: OneDrive's conflict pattern flagged
+  `Settled — do not re-open.md` (it ends `-open.md`). Tightened, and scoped with `(?-i:...)`
+  because the validator compiles with `re.I`, which had defeated the uppercase check.
+  OneDrive detection is documented as best-effort — machine-name suffixes are not reliably
+  distinguishable from ordinary hyphenated filenames.

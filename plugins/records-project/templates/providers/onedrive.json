@@ -1,0 +1,18 @@
+{
+  "name": "onedrive",
+  "display": "OneDrive",
+  "path_hint": "~/OneDrive/<folder>",
+  "mount_caveat": "UNVERIFIED \u2014 no OneDrive vault has been built.",
+  "offline_requirement": "Mark the folder \"Always keep on this device\"; Files On-Demand leaves placeholders.",
+  "conflict_patterns": [
+    "\\(\\d+\\)\\.md$",
+    "(?-i:-[A-Z][A-Z0-9-]{3,})\\.md$"
+  ],
+  "connector": null,
+  "connector_can_delete": false,
+  "delete_note": "Use `allow_cowork_file_delete`.",
+  "hazards": [
+    "Conflict naming appends the machine name (file-LAPTOP01.md), which is hard to tell from an ordinary hyphenated filename. Detection here is BEST-EFFORT and deliberately conservative - it looks for an ALL-CAPS suffix. Conflicts named after a lowercase machine will be missed; check by hand after any concurrent editing."
+  ],
+  "sharing": "Share the folder with edit access."
+}

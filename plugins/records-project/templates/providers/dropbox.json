@@ -1,0 +1,15 @@
+{
+  "name": "dropbox",
+  "display": "Dropbox",
+  "path_hint": "~/Dropbox/<folder>",
+  "mount_caveat": "Plain path; expected to mount without a symlink. UNVERIFIED — no Dropbox vault has been built yet.",
+  "offline_requirement": "Keep the folder out of Smart Sync \"online-only\" mode, which leaves placeholders.",
+  "conflict_patterns": ["\\(conflicted copy[^)]*\\)", "\\(Case Conflict\\)", "\\(\\d+\\)\\.md$"],
+  "connector": "Dropbox",
+  "connector_can_delete": true,
+  "delete_note": "The Dropbox connector exposes `delete`. UNVERIFIED against this plugin.",
+  "hazards": [
+    "Free tier is 2 GB — small for a vault containing raw medical imaging."
+  ],
+  "sharing": "Share the folder with edit access."
+}

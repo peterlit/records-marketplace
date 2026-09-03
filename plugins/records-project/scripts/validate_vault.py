@@ -2,19 +2,34 @@
 """Post-scaffold checks: folder notes present & correctly named, wikilinks resolve, no 0-byte files."""
 import sys, os, re, glob
 
+def load_project_config(root):
+    """A vault describes itself in .records-project.json. Before this existed the
+    validator guessed conflict patterns by OR-ing every provider's together, which
+    over-matched (e.g. '(2).md' is a Drive conflict but a legitimate iCloud name)."""
+    p = os.path.join(root, ".records-project.json")
+    if os.path.isfile(p):
+        try:
+            import json as _j
+            return _j.load(open(p, encoding="utf-8"))
+        except Exception:
+            pass
+    return None
+
+
 SYNC_CONFLICT = re.compile(
     r"\(conflicted copy[^)]*\)|conflicted copy|-conflict-|\(Case Conflict\)|"
     r"\.sync-conflict-|\(\d+\)\.md$|~HEAD|\.icloud$", re.I)
 
-def check_sync_conflicts(root):
+def check_sync_conflicts(root, patterns=None):
     """Cloud sync clients resolve simultaneous writes by DUPLICATING files.
     Two Cowork instances on one synced folder is exactly that case.
     Reconciling on top of conflicted copies silently forks the record."""
+    pat = re.compile("|".join(patterns), re.I) if patterns else SYNC_CONFLICT
     bad = []
     for dp, dns, fns in os.walk(root):
         dns[:] = [d for d in dns if d not in (".git",)]
         for fn in fns + [os.path.basename(dp)]:
-            if SYNC_CONFLICT.search(fn):
+            if pat.search(fn):
                 bad.append(os.path.relpath(os.path.join(dp, fn), root))
     return sorted(set(bad))
 
@@ -43,7 +58,11 @@ for p in md:
         t = link.split("/")[-1].strip()
         if t not in stems and link.strip() not in stems:
             fails.append(f"broken wikilink [[{link}]] in {os.path.relpath(p,root)}")
-for c in check_sync_conflicts(root):
+_cfg = load_project_config(root)
+_pats = (_cfg or {}).get("conflict_patterns")
+if _cfg is None:
+    print("  note: no .records-project.json - using generic conflict patterns")
+for c in check_sync_conflicts(root, _pats):
     fails.append(f"SYNC CONFLICT COPY: {c}  <- resolve before reconciling")
 if not md:
     fails.append(f"no markdown files found under {root} - scaffold did not run?")

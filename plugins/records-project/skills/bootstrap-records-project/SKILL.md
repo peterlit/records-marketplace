@@ -35,7 +35,7 @@ Ask these as **one or two batched multiple-choice rounds**, not an interrogation
 **Ask only if not obvious:**
 
 9. **Obsidian?** → `--obsidian`. Default **on** if they use it or don't know; harmless if unused. It installs the Folder Notes plugin config and writes a folder note per folder.
-10. **Cloud-synced folder?** → `--cloud iCloud|Dropbox|Google Drive|OneDrive`. If yes, the generated `CLAUDE.md` gains the sync hazard rules — build zips in scratch, verify no 0-byte copies, and use `allow_cowork_file_delete` when `rm` is refused (deletion protection is Cowork's, not the provider's). **Check the path for `iCloud`, `Dropbox`, `OneDrive` or `Google Drive` and confirm rather than asking blind.**
+10. **Storage provider** → `--provider gdrive|dropbox|icloud|onedrive|local`. **Infer it from the target path and confirm** rather than asking blind. This loads a provider profile that decides three things: the sync hazards written into the generated `CLAUDE.md`, the mount and offline-mode setup notes, and the **conflict-copy patterns the validator will use**. ⚠️ For `gdrive`, the profile carries the symlink requirement — the raw `CloudStorage` path will not mount into the sandbox.
 11. **Snapshot trigger** → `--snapshot master|always|never`. Default `master` (only when `01 Master/` changes) — this is the setting that stops snapshot spam.
 
 **Ask explicitly, never assume — these two are consent questions:**
@@ -78,9 +78,19 @@ python3 <scripts>/scaffold.py "<target>" \
   --preset health --subject "Jane Doe" --dob 1968-03-14 \
   --operator "Maria" --decision-maker "Jane Doe" \
   --advisor "Dr. Chen:cardiologist" --advisor "Dr. Okafor:PCP" \
-  --conservatism conservative --snapshot master --cloud Dropbox --obsidian \
+  --conservatism conservative --snapshot master --provider dropbox --obsidian \
   --situation "Newly diagnosed atrial fibrillation; anticoagulation decision pending."
 ```
+
+## Changing the provider later
+
+A vault records its own settings in `.records-project.json`. If it moves to different storage, **do not re-scaffold** — reconfigure:
+
+```bash
+python3 <scripts>/scaffold.py "<vault>" --reconfigure --provider dropbox
+```
+
+That rewrites only `CLAUDE.md` and `.records-project.json`; **no content is touched** — no folder notes, no Master files, no chronicle. Preset, co-users and Obsidian setting carry forward unless overridden. It refuses to run without an existing `.records-project.json`, so it can never be mistaken for a fresh scaffold over live data.
 
 ## Step 3 — verify, always
 

@@ -1,0 +1,13 @@
+{
+  "name": "local",
+  "display": "local disk (no cloud sync)",
+  "path_hint": "any local folder",
+  "mount_caveat": "",
+  "offline_requirement": "",
+  "conflict_patterns": [],
+  "connector": null,
+  "connector_can_delete": false,
+  "delete_note": "Use `allow_cowork_file_delete` — deletion protection applies to ordinary local folders too.",
+  "hazards": [],
+  "sharing": "Not shared. Single machine."
+}

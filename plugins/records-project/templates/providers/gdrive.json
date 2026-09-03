@@ -1,0 +1,17 @@
+{
+  "name": "gdrive",
+  "display": "Google Drive",
+  "path_hint": "~/Library/CloudStorage/GoogleDrive-<account>/My Drive/<folder>",
+  "mount_caveat": "⚠️ The raw CloudStorage path will NOT mount into Cowork's bash sandbox. Create a short symlink (e.g. `ln -s \"$HOME/Library/CloudStorage/GoogleDrive-<you>/My Drive\" \"$HOME/gDrive\"`) and attach THAT as the workspace folder. Verified 2026-09-02.",
+  "offline_requirement": "Set the folder to \"Available offline\" in Drive for Desktop. Streaming mode leaves placeholders that read as empty files.",
+  "conflict_patterns": ["\\(\\d+\\)\\.md$", "\\(conflicted copy[^)]*\\)", "\\.gdoc$"],
+  "connector": "Google Drive",
+  "connector_can_delete": true,
+  "delete_note": "`trash_file` via the Google Drive connector removes what `rm` refuses.",
+  "hazards": [
+    "Google Docs appear on the mount as ~170-byte .gdoc POINTERS, not content — invisible to grep, Obsidian and snapshots. Never store project content as a Doc.",
+    "Drive's plain-text preview auto-linkifies path-shaped text, so relative markdown links render as broken http:// URLs. Wikilinks are ugly there but inert.",
+    "The connector's read_file_content returns ESCAPED text, not raw bytes. Read through the mount instead."
+  ],
+  "sharing": "Share the folder, or use a Shared drive (requires Google Workspace Business Standard or above)."
+}

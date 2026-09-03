@@ -84,13 +84,21 @@ The [[05 Trends]] canonical file is the source of truth. Treat a re-upload as *p
 
 When triggered, write a dated zip into [[Snapshots]] as `snapshot-YYYY-MM-DD-HHMM.zip`. **Exclude** the Snapshots folder itself, [[03 Inbox]], `99 Archive`, and bulky raw data.
 {{#if cloud_folder}}
-⚠️ **This project lives on a cloud-synced folder ({{CLOUD_PROVIDER}}).** Three known hazards:
+⚠️ **This project lives on {{CLOUD_PROVIDER}}.** Provider-specific hazards:
+
+{{PROVIDER_HAZARDS}}
+{{#if has_mount_caveat}}
+**Mounting:** {{PROVIDER_MOUNT_CAVEAT}}
+{{/if}}
+**Keeping files real:** {{PROVIDER_OFFLINE}}
+
+General cloud-sync rules:
 - Build the zip in scratch with Python's `zipfile`, then copy it in — the `zip` binary's rename step fails on these mounts.
 - **Verify every copied file is larger than 0 bytes.** Cloud-only files copy as 0 bytes.
 - **If `rm` fails with "Operation not permitted", do NOT give up and do NOT tell {{OPERATOR_NAME}} to delete by hand.**
   This is **Cowork's deletion protection**, not a {{CLOUD_PROVIDER}} limitation — it applies to every connected
   folder including ordinary local disks. Call **`allow_cowork_file_delete`** to request permission.
-  {{#if gdrive}}Fallback: the Google Drive connector's `trash_file` can remove what bash cannot.{{/if}}
+  {{PROVIDER_DELETE_NOTE}}
 {{/if}}
 
 ## How to frame recommendations
