@@ -84,3 +84,19 @@ this is unrelated work reusing the number.)*
   because the validator compiles with `re.I`, which had defeated the uppercase check.
   OneDrive detection is documented as best-effort — machine-name suffixes are not reliably
   distinguishable from ordinary hyphenated filenames.
+
+## 0.6.0 — 2026-09-02
+
+- **Triggering eval corpus** (`evals/evals.json`, skill-creator schema) — 18 prompts
+  across all 7 skills, including **5 near-miss negatives** that must fire nothing:
+  "organise my Downloads", "export this spreadsheet as a PDF", "review this PR and tell
+  me what I'm missing". Negatives are usually what an eval set is missing, and they are
+  what catches a description that fires on a keyword rather than a situation.
+- **`lint_triggering.py`** — static proxy flagging two failure classes: two skills
+  competing for the same prompt, and a negative prompt scoring high against a skill.
+  ⚠️ Documented in the script itself as **not a measure of triggering** — that needs
+  Claude in the loop via skill-creator's `run_eval.py`.
+- **Fixed a real description gap it found**: `file-to-records` shared **zero vocabulary**
+  with "the cardiologist just called and changed the dose" — a core use case. Widened to
+  cover verbal reports, medication and dose changes, symptoms appearing, and decisions
+  being made, not just files landing in the Inbox.

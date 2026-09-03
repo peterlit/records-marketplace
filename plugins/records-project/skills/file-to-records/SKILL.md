@@ -1,6 +1,6 @@
 ---
 name: file-to-records
-description: File a new document, test result, visit note, or piece of news into an existing records project - dating it correctly, renaming it, archiving the original, merging any numbers into the trend tables, and updating the summary, timeline and question lists. Use whenever someone drops a file into a records project's Inbox, pastes a result or a doctor's message into chat, or says something new has happened in a case being tracked. Also use when asked to process, sort, file, or catch up an Inbox.
+description: File new information into an existing records project - a document, test or lab result, visit or appointment note, scan, letter, or something an advisor said. Dates it correctly, renames it, archives the original, merges any numbers into the trend tables, and updates the summary, timeline and question lists. Use whenever someone drops a file into a project's Inbox, pastes a result, forwards a message, or REPORTS SOMETHING THAT HAPPENED - a doctor phoned, a medication or dose changed, a prescription started or stopped, a symptom appeared or worsened, an appointment happened, a decision was made. Also use when asked to process, sort, file, or catch up an Inbox.
 license: MIT
 ---
 
