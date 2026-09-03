@@ -113,6 +113,26 @@ General cloud-sync rules:
 - `no snapshot` → skip the zip. · `quiet` → do the updates but don't narrate.
 - `orient` → give a 5-line status of where things stand before proceeding.
 
+## Skills — invoked by THIS FILE, not by guesswork
+
+The `records-project` plugin skills are deliberately **not** self-triggering outside a project.
+They fire because this file tells Claude to. When the classification above calls for one, invoke
+it by name:
+
+| Situation | Skill |
+|---|---|
+| Something new arrives — a file in [[03 Inbox]], or a result/message pasted in chat | `records-project:file-to-records` |
+| The new content quotes a recommendation from {{AN_ADVISOR}} | `records-project:records-critique` |
+| "What am I missing?", a pre-appointment review, or a lot has been filed since the last one | `records-project:records-gap-audit` |
+{{#if SHARED}}| Checking whether a co-user is working right now, or conflict copies appear | `records-project:records-sync-status` |
+{{/if}}
+**If the plugin is not installed, do the work inline anyway.** Every step is written out above;
+the skills are a fuller version of the same instructions, not a dependency. A project whose
+filing silently stops because a plugin was uninstalled would be worse than no plugin at all.
+
+**Claude must not invoke these outside this project.** Their descriptions say so, and this file
+is the thing that establishes you are inside one.
+
 ## Conventions
 - ISO dates everywhere: `YYYY-MM-DD`.
 - Reports and deliverables in **Markdown**{{#if obsidian}}, with Obsidian-friendly wikilinks in double square brackets (escape pipes inside tables){{/if}}.

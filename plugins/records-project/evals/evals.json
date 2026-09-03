@@ -1,103 +1,114 @@
 {
   "skill_name": "records-project",
-  "_note": "Triggering corpus. Each entry names the skill that SHOULD fire. Entries with expect_skill=null are near-misses that must fire NOTHING in this plugin - those are the ones that catch over-eager descriptions, and they are usually what is missing from an eval set.",
+  "_note": "Triggering corpus. bootstrap-records-project is EXPLICIT-INVOCATION-ONLY by design (2026-09-02): every prompt that does not name it must fire nothing. The other skills are model-selectable inside a project. Entries with expect_skill=null must fire NOTHING in this plugin.",
   "evals": [
     {
       "id": 1,
-      "expect_skill": "bootstrap-records-project",
+      "expect_skill": null,
       "prompt": "My mother was just diagnosed with something serious and there is already a pile of paperwork. Can you help me get organised?",
-      "expected_output": "Interviews, then scaffolds a health-preset vault",
+      "expected_output": "Ordinary supportive answer. bootstrap must NOT fire - a diagnosis plus paperwork is not an invocation.",
       "expectations": [
-        "Does not require the words 'project' or 'records' to fire",
-        "Asks who the decision-maker is rather than assuming it is the person typing"
+        "Helps with the underlying request normally",
+        "Does NOT scaffold a vault and does NOT propose scaffolding one",
+        "May mention the skill exists ONLY if the person asks for a system to keep records in"
       ]
     },
     {
       "id": 2,
-      "expect_skill": "bootstrap-records-project",
+      "expect_skill": null,
       "prompt": "I want to start tracking everything to do with my father's care in one place.",
-      "expected_output": "Interviews, then scaffolds",
+      "expected_output": "Ordinary answer. bootstrap must NOT fire on 'start tracking everything in one place'.",
       "expectations": [
-        "Asks about domain, subject, advisors and decision-maker"
+        "Helps with the underlying request normally",
+        "Does NOT scaffold a vault and does NOT propose scaffolding one",
+        "May mention the skill exists ONLY if the person asks for a system to keep records in"
       ]
     },
     {
       "id": 3,
-      "expect_skill": "bootstrap-records-project",
+      "expect_skill": null,
       "prompt": "Set up a system for my divorce paperwork.",
-      "expected_output": "Scaffolds with the generic preset",
+      "expected_output": "Ordinary answer. bootstrap must NOT fire on 'set up a system for my divorce paperwork'.",
       "expectations": [
-        "Chooses generic rather than health",
-        "Uses advisor vocabulary, not doctor"
+        "Helps with the underlying request normally",
+        "Does NOT scaffold a vault and does NOT propose scaffolding one",
+        "May mention the skill exists ONLY if the person asks for a system to keep records in"
       ]
     },
     {
       "id": 4,
       "expect_skill": "file-to-records",
-      "prompt": "I dropped a lab result in the Inbox.",
+      "prompt": "[inside a records project; its CLAUDE.md is in context] I dropped a lab result in the Inbox.",
       "expected_output": "Files it by event date, archives the original, merges trends",
       "expectations": [
         "Uses the date on the document, not today",
-        "Copies the original to Raw Archive first"
+        "Copies the original to Raw Archive first",
+        "Fires because the project's CLAUDE.md directs it, not on phrase match alone"
       ]
     },
     {
       "id": 5,
       "expect_skill": "file-to-records",
-      "prompt": "The cardiologist just called and changed the dose. Here is what she said: ...",
+      "prompt": "[inside a records project; its CLAUDE.md is in context] The cardiologist just called and changed the dose. Here is what she said: ...",
       "expected_output": "Type A: logs, updates summary and question list, triggers a critique",
       "expectations": [
         "Records who said it and when",
-        "Triggers records-critique for advisor advice"
+        "Triggers records-critique for advisor advice",
+        "Fires because the project's CLAUDE.md directs it, not on phrase match alone"
       ]
     },
     {
       "id": 6,
       "expect_skill": "file-to-records",
-      "prompt": "Can you catch up the Inbox? A few things have piled up.",
+      "prompt": "[inside a records project; its CLAUDE.md is in context] Can you catch up the Inbox? A few things have piled up.",
       "expected_output": "Processes every item, empties the Inbox",
       "expectations": [
-        "Detects duplicates by content, not filename"
+        "Detects duplicates by content, not filename",
+        "Fires because the project's CLAUDE.md directs it, not on phrase match alone"
       ]
     },
     {
       "id": 7,
       "expect_skill": "records-gap-audit",
-      "prompt": "What am I missing?",
+      "prompt": "[inside a records project; its CLAUDE.md is in context] What am I missing?",
       "expected_output": "Full re-read, tiered gaps",
       "expectations": [
         "Reads the Settled register BEFORE reporting anything",
-        "Reports 'no new gaps' if that is the honest answer rather than manufacturing findings"
+        "Reports 'no new gaps' if that is the honest answer rather than manufacturing findings",
+        "Fires because the project's CLAUDE.md directs it, not on phrase match alone"
       ]
     },
     {
       "id": 8,
       "expect_skill": "records-gap-audit",
-      "prompt": "I have an appointment next week. Has anything fallen through the cracks?",
+      "prompt": "[inside a records project; its CLAUDE.md is in context] I have an appointment next week. Has anything fallen through the cracks?",
       "expected_output": "Gap audit ahead of an appointment",
       "expectations": [
-        "Checks whether a later document already resolved each candidate gap"
+        "Checks whether a later document already resolved each candidate gap",
+        "Fires because the project's CLAUDE.md directs it, not on phrase match alone"
       ]
     },
     {
       "id": 9,
       "expect_skill": "records-critique",
-      "prompt": "My doctor wants to put me on a statin. Is that sound?",
+      "prompt": "[inside a records project; its CLAUDE.md is in context] My doctor wants to put me on a statin. Is that sound?",
       "expected_output": "Steelman for, strongest case against, options",
       "expectations": [
         "Distinguishes 'wrong' from 'one reasonable option' from 'outside mainstream'",
         "Does not end with 'you should'",
-        "Respects the conservatism dial in CLAUDE.md"
+        "Respects the conservatism dial in CLAUDE.md",
+        "Fires because the project's CLAUDE.md directs it, not on phrase match alone"
       ]
     },
     {
       "id": 10,
       "expect_skill": "records-critique",
-      "prompt": "My two specialists are telling me different things about the same test.",
+      "prompt": "[inside a records project; its CLAUDE.md is in context] My two specialists are telling me different things about the same test.",
       "expected_output": "Lays out both positions without resolving them",
       "expectations": [
         "Leaves the disagreement standing as the finding",
-        "Names who decides"
+        "Names who decides",
+        "Fires because the project's CLAUDE.md directs it, not on phrase match alone"
       ]
     },
     {
@@ -222,6 +233,48 @@
         "Does NOT argue about whether tax documents qualify as a records project",
         "Uses details already given (accountant, date range) instead of re-asking",
         "May ask ONE line about whether it keeps accumulating - then builds either way"
+      ]
+    },
+    {
+      "id": 24,
+      "expect_skill": "bootstrap-records-project",
+      "prompt": "Bootstrap a records project for my father's care. He sees a neurologist, Dr. Adeyemi.",
+      "expected_output": "Explicit ask in plain words - fires, interviews briefly, scaffolds health preset.",
+      "expectations": [
+        "'Bootstrap a records project' is an explicit request even without the slash command",
+        "Takes Dr. Adeyemi as an advisor without re-asking",
+        "Still asks who the decision-maker is rather than assuming"
+      ]
+    },
+    {
+      "id": 25,
+      "expect_skill": null,
+      "prompt": "My wife was just diagnosed with MS and there are already three folders of paperwork. Where do I even start?",
+      "expected_output": "Answer the question with care. bootstrap must NOT fire - this is the exact case the old description over-triggered on.",
+      "expectations": [
+        "Responds to the person, not the filing problem",
+        "Does NOT scaffold, and does NOT pitch a records project unprompted"
+      ]
+    },
+    {
+      "id": 26,
+      "expect_skill": "records-critique",
+      "prompt": "[inside a records project] Dr. Adeyemi wants to add a second blood pressure med. Here is her note: ...",
+      "expected_output": "CLAUDE.md Type A: files it, then invokes records-critique automatically.",
+      "expectations": [
+        "User did not name the skill - CLAUDE.md drove it",
+        "Writes to 04 Critiques without being asked",
+        "Does not end with 'you should'"
+      ]
+    },
+    {
+      "id": 27,
+      "expect_skill": null,
+      "prompt": "[no records project in this folder] My accountant says I should incorporate. Sound advice?",
+      "expected_output": "Ordinary conversation. records-critique must NOT fire with no project present.",
+      "expectations": [
+        "Answers normally",
+        "Creates no files, mentions no records project"
       ]
     }
   ]

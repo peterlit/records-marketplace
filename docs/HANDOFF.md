@@ -48,6 +48,19 @@ python3 $P/scripts/validate_vault.py /tmp/v               # must print "vault va
 
 **Link style: wikilinks only.** `--links wiki|markdown|plain` was built (v0.5.0/0.5.1) and **reverted** (0.4.0 + `records-export-doc`). Markdown links are *worse* than wikilinks on Drive for the reason in the table above, and `plain` only looked marginally nicer while losing Obsidian navigation and Folder Notes click-through entirely. The maintainer judged the option not worth its complexity. **If the "markdown looks ugly in Drive" complaint comes back, the answer is `records-export-doc`** — render a formatted Google Doc on demand — not a link-style setting.
 
+**`bootstrap-records-project` is explicit-invocation-only.** Decided 2026-09-02 by the
+maintainer, who uses this plugin for a real medical project. Rationale: he bootstraps a project
+perhaps twice a year, but has hundreds of unrelated chats — so the expected cost of a false
+positive vastly exceeds the benefit of a natural-language trigger he doesn't need. Inside a
+project, the generated `CLAUDE.md` runs the workflow, so nothing is lost. **Do not "improve"
+this by widening the description again**; evals 1–3 were flipped from positives to negatives to
+lock it in, and eval 25 is the case it must not fire on.
+
+⚠️ Enforcement is the **description field only**. `disable-model-invocation: true` would be the
+hard switch, but it is not one of the six portable frontmatter keys and is a hard error outside
+Claude Code (`lint_frontmatter.py` will reject it). If that key ever becomes portable, set it
+and delete the prose.
+
 **No static triggering metric.** A word-overlap analyzer (`lint_triggering.py`) was built
 and deleted the same day. It cannot see negation — adding "DO NOT USE for X" *raises* the
 score against X — and after three tunings it ranked `records-sync-status` top for "my mother

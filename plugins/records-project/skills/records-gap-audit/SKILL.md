@@ -1,6 +1,6 @@
 ---
 name: records-gap-audit
-description: Audit a records project for what is being missed - unaddressed findings, overdue follow-ups, contradictions between documents, items nobody owns, and things mentioned once then dropped. Use when someone asks what they are missing, what has fallen through the cracks, whether anything is being overlooked, for a gap analysis or a fresh look at the whole picture, or when they want a full re-read of a case before an appointment or a decision. Also use periodically after a lot of new material has been filed.
+description: Audit a records project for what is being missed - unaddressed findings, overdue follow-ups, contradictions between documents, items nobody owns, and things mentioned once then dropped. Use when someone asks what they are missing, what has fallen through the cracks, whether anything is being overlooked, for a gap analysis or a fresh look at the whole picture, or when they want a full re-read of a case before an appointment or a decision. Also use periodically after a lot of new material has been filed. Only applies INSIDE an existing records project - a folder containing a CLAUDE.md and 01 Master/, or a .records-project.json marker. That project's CLAUDE.md invokes this automatically; it is the normal way this skill runs. NEVER use it outside such a project: 'what am I missing', 'anything fall through the cracks' and similar phrases are ordinary English and must not pull a records audit into a code review, a document draft, or any unrelated chat.
 license: MIT
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: bootstrap-records-project
-description: Set up a structured records project for an ONGOING SITUATION that will accumulate documents, advisors and decisions over months or years - a medical case, a legal matter, an elderly parent's care. Creates an Obsidian-friendly vault with a Master Summary, chronological chronicle, per-advisor question lists, a settled-questions register, and a filing workflow that runs thereafter. Use when someone wants to track, organise or get on top of a diagnosis, a legal matter, a parent's care, or any body of records that keeps growing - even if they never say "project" or "records". DO NOT USE for one-off tidying that finishes once it is done: a Downloads or photos folder, an email backlog, filing tax documents. The test is whether there are ADVISORS and DECISIONS to track over time, not merely files to arrange. If unsure, ask before scaffolding anything.
+description: Scaffold a new structured records project - a vault with a Master Summary, chronological chronicle, per-advisor question lists, a settled-questions register, and a CLAUDE.md workflow engine that runs the project thereafter. ONLY use this skill when the user explicitly invokes it by name, or explicitly asks to bootstrap, scaffold or set up a records project. NEVER select it on your own initiative. Do not fire on someone describing a diagnosis, a legal matter, an ill relative, a pile of paperwork, or any request to organise, track or get on top of something - answer those normally and do not mention this skill. Inside an existing records project the CLAUDE.md in that folder already runs the workflow; this skill is only for creating a project that does not exist yet.
 license: MIT
 ---
 
@@ -8,23 +8,25 @@ license: MIT
 
 Creates a working vault plus the standing workflow that keeps it current. The person's only ongoing job afterwards is dropping files into `03 Inbox`.
 
-## If the person invoked this skill explicitly, the DO NOT USE clause does not apply
+## This skill is invoked deliberately, never inferred
 
-The `DO NOT USE for one-off tidying` line in the description governs **automatic**
-triggering — it stops this firing on "organise my Downloads" in an unrelated chat.
+The description tells the model not to select this on its own. So if you are reading this,
+**the person asked for it by name.** That has two consequences:
 
-**If someone deliberately named this skill, they have already decided.** Do not argue,
-do not re-litigate whether their situation "qualifies", and do not lecture them about
-what a records project is for. Build what they asked for.
+- **Do not re-litigate whether their situation qualifies.** They have already decided. Build
+  what they asked for. Tax documents, a house renovation, an immigration case, a pet's chronic
+  illness — all fine. Do not lecture them about what a records project is "for".
+- **Do not ask questions they have already answered.** They usually name the domain, and often
+  the subject and an advisor, in the same breath as invoking the skill. Take those and skip
+  ahead.
 
-Two things are still worth one short question when the fit is genuinely unclear:
+One thing is still worth a single line when the fit is unclear: **does this keep accumulating,
+or does it finish?** A one-off pile of receipts gets no value from a Settled register or a
+question list. Say that in one sentence, offer a plain folder structure as the alternative, and
+build whichever they pick — do not refuse.
 
-- **Will this keep accumulating, or does it finish?** Multi-year tax history with an
-  accountant and recurring decisions is a real `generic` project. A single year's
-  receipts to sort probably isn't — but *say that in one line and let them choose*,
-  rather than refusing.
-- **Are there advisors?** If none, the per-advisor question lists will sit empty. That
-  is fine; just don't invent advisors to fill them.
+If there are no advisors, the per-advisor question lists sit empty. That is fine; never invent
+advisors to fill them.
 
 ## Before you start
 
