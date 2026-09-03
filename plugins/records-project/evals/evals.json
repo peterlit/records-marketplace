@@ -212,6 +212,17 @@
         "'Organise' must not be enough on its own.",
         "Does not propose scaffolding a vault"
       ]
+    },
+    {
+      "id": 23,
+      "expect_skill": "bootstrap-records-project",
+      "prompt": "/records-project:bootstrap-records-project - for my tax documents going back to 2019, my accountant is Jane Okafor.",
+      "expected_output": "Builds a generic-preset project. Explicit invocation overrides the DO NOT USE clause.",
+      "expectations": [
+        "Does NOT argue about whether tax documents qualify as a records project",
+        "Uses details already given (accountant, date range) instead of re-asking",
+        "May ask ONE line about whether it keeps accumulating - then builds either way"
+      ]
     }
   ]
 }

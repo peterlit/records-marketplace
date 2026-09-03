@@ -8,6 +8,24 @@ license: MIT
 
 Creates a working vault plus the standing workflow that keeps it current. The person's only ongoing job afterwards is dropping files into `03 Inbox`.
 
+## If the person invoked this skill explicitly, the DO NOT USE clause does not apply
+
+The `DO NOT USE for one-off tidying` line in the description governs **automatic**
+triggering — it stops this firing on "organise my Downloads" in an unrelated chat.
+
+**If someone deliberately named this skill, they have already decided.** Do not argue,
+do not re-litigate whether their situation "qualifies", and do not lecture them about
+what a records project is for. Build what they asked for.
+
+Two things are still worth one short question when the fit is genuinely unclear:
+
+- **Will this keep accumulating, or does it finish?** Multi-year tax history with an
+  accountant and recurring decisions is a real `generic` project. A single year's
+  receipts to sort probably isn't — but *say that in one line and let them choose*,
+  rather than refusing.
+- **Are there advisors?** If none, the per-advisor question lists will sit empty. That
+  is fine; just don't invent advisors to fill them.
+
 ## Before you start
 
 **Do not scaffold into a folder that already has content** unless the person confirms. Check first.
