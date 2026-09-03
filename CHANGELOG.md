@@ -144,3 +144,21 @@ this is unrelated work reusing the number.)*
 - **Validator catches language drift.** If the config says a language but `CLAUDE.md` has
   no matching `## Language` section, validation fails — because the failure mode is silent
   and only becomes visible after months of records have accumulated in the wrong language.
+- **`preflight.py` — fail in two seconds, not fifteen minutes.** Writes a canary into the
+  target, reads it back, checks it is non-zero, deletes it. Catches an unmounted path, a
+  cloud folder in streaming mode (0-byte writes that report success), a mangling sync layer,
+  and a non-empty target. Prompted by a real run on a second account that sat for 15 minutes
+  with an empty folder while the session tarred and checksummed things — it had lost the
+  plugin scripts and was improvising.
+- **Bootstrap Step 1.5 forbids improvising.** If the plugin locator finds nothing, stop and
+  say so: no `find`, no `ls -R`, and never a sweep of `/sessions/*/mnt/`, which can force a
+  cloud provider to materialise thousands of files — looks like a hang, may quietly download
+  gigabytes, and will not find the plugin anyway. States the benchmark plainly: a correct
+  scaffold is ~0.03s and ~31 files, so minutes means stuck, not slow.
+- **Language switches mid-conversation are handled.** People often open in English and drop
+  into their own language once the interview gets personal. Same signal, arriving late.
+- **Corrected a documented finding.** HANDOFF claimed the raw `~/Library/CloudStorage/…`
+  Google Drive path would not mount and needed a `~/gDrive` symlink. It does mount, and a
+  canary round-trips fine; Cowork's folder picker canonicalises symlinks anyway, so the
+  workaround does not survive. "Available offline" is still genuinely required.
+

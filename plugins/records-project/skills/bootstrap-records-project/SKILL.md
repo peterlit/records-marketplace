@@ -49,6 +49,13 @@ no memory of how this one went.
 
 Conduct the rest of the interview in whichever language they chose.
 
+**Watch for a switch mid-conversation.** People often open in English and drop into their own
+language a few turns later, once the interview gets personal. That is the same signal arriving
+late, not a different one — ask the same question at that point rather than carrying on in
+English. This applies after bootstrap too: if someone starts writing to an established project
+in a new language, offer to change `--language` via `--reconfigure` rather than quietly
+producing a bilingual record.
+
 Two things to say plainly if they pick a non-English language:
 
 - Folder and file names stay English (`01 Master`, `03 Inbox`) because the scripts and skills
@@ -84,6 +91,29 @@ Ask these as **one or two batched multiple-choice rounds**, not an interrogation
 
 12. **May Claude store this in memory across chats?** → `--memory`. **Only pass this flag on an explicit yes.** Without it the generated `CLAUDE.md` tells Claude to skip memory updates. Say what it means: faster context in future chats, at the cost of the information persisting outside the folder.
 13. **Sensitive personal data?** → `--store-sensitive`. For health projects, ask directly whether they consent to health details being stored in the project. Records the consent date in `CLAUDE.md`.
+
+## Step 1.5 — preflight, and NEVER improvise a search
+
+```bash
+python3 <scripts>/preflight.py "<target>"
+```
+
+It writes a canary, reads it back, checks the size is non-zero, and deletes it. Every one of
+those checks corresponds to a real failure that otherwise shows up as *a command that runs for
+fifteen minutes and produces an empty folder*. **A correct scaffold takes about 0.03 seconds and
+writes ~31 files.** Nothing on the happy path takes minutes. If something is taking minutes it
+is stuck, not slow — stop and report, do not wait.
+
+**If the plugin locator in Step 2 finds nothing, STOP and say so.** Do not fall back to `find`,
+`ls -R`, `grep -r` or any other sweep, and above all do not sweep `/sessions/*/mnt/` — those are
+the person's mounted folders. Sweeping them can force a cloud provider to materialise thousands
+of files one at a time: it looks like a hang, it can silently download tens of gigabytes, and it
+will not find the plugin anyway. Say "the plugin scripts are not reachable from this session"
+and let the person reinstall.
+
+Likewise **do not improvise around a failure** by tarring, checksumming or copying the plugin
+somewhere else. If the scripts are not where the locator expects, the install is broken and that
+is the finding to report.
 
 ## Step 2 — build
 

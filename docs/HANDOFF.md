@@ -38,7 +38,7 @@ python3 $P/scripts/validate_vault.py /tmp/v               # must print "vault va
 | **Marketplace plugins mount at `.remote-plugins/<opaque-id>/`** | **Not** `.claude/skills/`, and the directory name is an opaque id, *not* the plugin name. Built-in plugins mount flat by skill name. The locator in `bootstrap-records-project/SKILL.md` handles all four cases — **it was wrong until a real install proved it.** |
 | **`CLAUDE_PLUGIN_ROOT` does not exist in the Cowork sandbox** | Only `CLAUDE_TMPDIR` and proxy vars. It *is* set in Claude Code. **Never hardcode a plugin path in shell**; locate once, then let scripts self-resolve via `__file__`. |
 | **Deletion protection is Cowork's, not the cloud provider's** | `rm` fails with "Operation not permitted" on iCloud, Google Drive, **and ordinary local disk**, and in `outputs`. This was misattributed to iCloud for months. Call **`allow_cowork_file_delete`**. |
-| **Google Drive works, but needs a symlink** | The raw `~/Library/CloudStorage/GoogleDrive-<acct>/My Drive/…` path **will not mount** into the bash sandbox. A short symlink (`~/gDrive`) to the same place mounts fine. Also requires Drive for Desktop **"Available offline"** — streaming mode yields empty reads. |
+| **Google Drive: the raw `CloudStorage` path works** | ⚠️ **Corrected 2026-09-02.** An earlier finding here claimed the raw `~/Library/CloudStorage/GoogleDrive-<acct>/…` path *will not mount* and that a `~/gDrive` symlink was required. **That is not true in current Cowork** — the raw path mounts, and a canary write/read/delete round-trips correctly. Cowork's folder picker canonicalises symlinks anyway, so the workaround does not survive being re-added. Drive **"Available offline"** is still required: streaming mode yields empty reads and 0-byte writes. `preflight.py` now detects exactly that. |
 | **The Drive *connector* cannot edit file contents** | `update_file` handles title and parentId only. And **reads are escaped** — `read_file_content` returns a "natural language representation" (`\# Heading`, `\[\[link\]\]`), not bytes. Storage is faithful; only the connector's read path mangles it. Consequence: **a filesystem-less surface (Slack) can comprehend and append, never curate.** |
 | **Markdown survives on Drive** | With `disableConversionToGoogleType: true`, `.md` stays `text/markdown` rather than becoming a Google Doc. |
 | **Frontmatter portability** | Outside Claude Code only `name`, `description`, `license`, `compatibility`, `metadata`, `allowed-tools` are legal. Any other key is a **hard error**, not a warning. `lint_frontmatter.py` enforces this. |
@@ -78,6 +78,16 @@ These exist because the source project got them wrong repeatedly. They are the a
 3. **Event date, not upload date.** A lab drawn on the 17th and reported on the 29th files under the 17th.
 4. **Flag conflicting values; never silently overwrite** a trend table.
 5. **Verify writes are non-zero.** Cloud-only files copy as 0 bytes and fail silently.
+
+## Failure mode to design against: the silent hang
+
+A bootstrap that "runs for 15 minutes" is **always** stuck, never slow — a correct scaffold is
+0.03s and 31 files. Observed 2026-09-02 on a second account: the folder stayed empty while the
+session tarred and checksummed things (`/tmp/rp.tgz`), i.e. it had lost the plugin scripts and
+was improvising. `scripts/preflight.py` exists to convert every such case into a two-second
+failure with a specific message, and `bootstrap-records-project` Step 1.5 now forbids the
+improvisations — no filesystem sweeps, and never across `/sessions/*/mnt/`, which can force a
+cloud provider to materialise thousands of files.
 
 ## What's next
 
