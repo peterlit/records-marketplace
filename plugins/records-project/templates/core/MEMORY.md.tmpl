@@ -1,0 +1,18 @@
+# Memory — {{PROJECT_TITLE}}
+
+*Index of durable facts. **One line per entry**, pointing at a file in `memory/`. Claude reads this at the start of every session.*
+
+> ⚠️ **This file, not Claude's account memory, is the source of truth.**{{#if shared}} Each co-user has a separate Claude account with its own private memory, and those **will diverge**. Anything that must be true for everyone lives here.{{/if}} If account memory and this file disagree, **this file wins**.
+>
+> Keep entries short. Detail belongs in the linked topic file, or in the chronicle.
+
+| Topic | File | Hook |
+|---|---|---|
+| _none yet_ | | |
+
+## How to use this
+
+- **One topic per file** in `memory/`. Topic files rarely collide because different sessions touch different topics — a single monolithic memory file is a guaranteed collision point.
+- Add a row here when you create a topic file. Never put the content itself in this index.
+- Convert relative dates to absolute (`2026-09-02`, not "last week").
+- When something is **adjudicated**, it belongs in [[01 Master/Settled — do not re-open|Settled — do not re-open]], not here.

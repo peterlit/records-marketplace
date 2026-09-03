@@ -24,6 +24,9 @@ CORE_FOLDERS = {
     "99 Archive":    "Superseded material. Kept for provenance, not for reading.",
 }
 
+# Folders whose notes come from a template rather than the generated stub.
+TEMPLATED_FOLDERS = {"memory": "memory", "_sync": "_sync"}
+
 
 # ---------- tiny template renderer: {{VAR}} and {{#if flag}}...{{/if}} ----------
 
@@ -145,9 +148,11 @@ def main():
     ctx["FIRST_AUTHOR"] = co[0] if co else a.operator
     ctx["CO_USER_LIST"] = ("\n".join(f"- **{c}**" for c in co)
                            if co else "_No co-users recorded._")
+    ctx["CO_USER_OTHER"] = co[1] if len(co) > 1 else "the other co-user"
     if shared:
         # In shared mode nobody is "the operator" - the engine addresses whoever is typing.
         ctx["OPERATOR_NAME"] = "either co-user"
+        ctx["CO_USER_OTHER"] = co[1]
 
     advisors = [s.split(":", 1) if ":" in s else (s, "") for s in a.advisor]
     ctx["ADVISOR_ROSTER"] = ("\n".join(
@@ -172,6 +177,8 @@ def main():
             if not fn.endswith(".tmpl"): continue
             src = os.path.join(dp, fn)
             rel = os.path.relpath(src, os.path.join(TPL, "core"))[:-5]
+            if rel.startswith("_sync") and not shared:
+                continue          # presence markers are a shared-mode concept
             write(os.path.join(a.target, rel),
                   render(open(src, encoding="utf-8").read(), ctx))
 
@@ -186,6 +193,11 @@ def main():
         p = os.path.join(a.target, "05 Trends", fn)
         if not os.path.exists(p):
             write(p, header + "\n")
+
+    # memory/ always; _sync/ only when there is more than one co-user
+    os.makedirs(os.path.join(a.target, "memory"), exist_ok=True)
+    if shared:
+        os.makedirs(os.path.join(a.target, "_sync"), exist_ok=True)
 
     if a.obsidian:
         obsidian_config(a.target)

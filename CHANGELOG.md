@@ -34,3 +34,19 @@
   `vault valid` after checking zero notes), and fails when no markdown is found.
 - Template renderer handles nested `{{#if}}`; unrendered template syntax now fails
   validation instead of shipping.
+
+## 0.4.0 — 2026-09-02
+
+- **In-folder memory.** `MEMORY.md` index + `memory/<topic>.md` files, created in every
+  vault. The engine reads them at session start and treats them as the source of truth:
+  Claude's account memory is per-user and diverges, so anything load-bearing lives here.
+  One topic per file, because a single memory file is a guaranteed collision point.
+- **Presence markers (shared mode).** `_sync/<ISO>__<who>__started|stopped.md` —
+  creation-only, uniquely named, so concurrent sessions cannot collide. New
+  `records-sync-status` skill and `sync_status.py` report ACTIVE / STALE (>4h) sessions.
+  Documented throughout as **awareness and audit, never a lock** — sync latency makes
+  them unreliable over exactly the window a lock would matter.
+- **Optimistic concurrency.** The engine now requires re-reading a curated `01 Master`
+  file immediately before writing it, and merging rather than overwriting if it changed.
+  This is what actually makes concurrent editing safe; the markers only make collisions
+  rarer and visible.

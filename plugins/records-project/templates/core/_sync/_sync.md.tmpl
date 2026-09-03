@@ -1,0 +1,16 @@
+# _sync
+
+Session presence markers. **Machine-written; do not edit by hand.**
+
+`<ISO-8601-UTC>__<who>__started.md` when a session begins, and a matching `…__stopped.md` when it ends. Filenames are unique, so two sessions writing at once never collide — which is the whole point.
+
+## What they are for
+
+- **Awareness** — is someone else working right now?
+- **Audit** — who worked when, across surfaces.
+
+## What they are NOT
+
+⚠️ **Not a lock.** Sync propagation takes seconds to minutes, so a marker can be invisible to the other person over exactly the window where a lock would matter. Safety comes from the re-read-before-write rule in `CLAUDE.md`, not from these.
+
+**A `started` with no `stopped` after 4 hours is stale** — a crashed session or a closed laptop — not an active one.

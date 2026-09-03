@@ -32,8 +32,27 @@ Read, in order: **this file → memory (MEMORY.md + files) → [[01 Master/Maste
 {{/if}}
 {{/if}}
 
-## Memory is a convenience, never a source of truth
-Anything that must stay true across chats belongs in a **file**, not only in memory. If memory and a file disagree, the file wins.
+## Memory lives in this folder, not in Claude's account memory
+**Read [[MEMORY]] and the relevant `memory/*.md` topic files at the start of every session.** Write durable facts there — one topic per file, indexed by a single line in `MEMORY.md`.
+
+**Claude's account memory is per-user and private{{#if shared}}; with more than one co-user it diverges immediately{{/if}}.** These files are the shared, inspectable, snapshot-able record. **If account memory and a file disagree, the file wins.** Never leave anything load-bearing in account memory alone.
+{{#if shared}}
+## Sessions announce themselves — `_sync/` presence markers
+**At the start of a session:** list `_sync/`. If another co-user has a `started` marker with no matching `stopped`, and it is **less than 4 hours old**, say so — *"{{CO_USER_OTHER}} started 12 minutes ago; they may be working right now."* **Report it; do not refuse to proceed.** Then write your own marker:
+
+`_sync/<ISO-8601-UTC>__<your-name>__started.md` — body: surface, and one line on what you intend to do.
+
+**At the end:** write the matching `…__stopped.md`. Markers older than **4 hours with no `stopped` are stale** — ignore them and say so, rather than treating them as an active session.
+
+⚠️ **Markers are awareness, not a lock.** Cloud sync takes seconds to minutes to propagate, so a marker can be invisible to the other person over exactly the window where a lock would matter. They make collisions rarer and visible. What makes them *safe* is the next rule.
+
+## Before rewriting anything in [[01 Master]] — re-read it first
+Appends cannot collide: Prompt Log rows, Timeline rows, Inbox drops, new files in the chronicle. **The curated files in [[01 Master]] can.**
+
+So: when you read a Master file intending to change it, **note its size and modification time. Immediately before writing, read it again.** If it changed since you started, **do not overwrite — merge both sets of changes**, and say in the Prompt Log that you merged and what you reconciled.
+
+This has no race window and works whether or not either session saw the other's marker.
+{{/if}}
 
 ## Classify each message, then act
 
