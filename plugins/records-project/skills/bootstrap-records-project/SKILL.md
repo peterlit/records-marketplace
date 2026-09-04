@@ -30,7 +30,10 @@ advisors to fill them.
 
 ## Before you start
 
-**Do not scaffold into a folder that already has content** unless the person confirms. Check first.
+**`scaffold.py` now refuses in code** if the target already contains `.records-project.json`,
+`CLAUDE.md` or `01 Master/`, and tells you to use `--reconfigure`. Do not reach for `--force` to
+get past it: that overwrites the Master Summary, the settled register and every question list
+with empty templates. It exists for deliberate teardown, not for getting unstuck.
 
 If a `CLAUDE.md` and `01 Master/` already exist, this project is already set up — don't re-bootstrap it. Read the existing `CLAUDE.md` and follow it instead.
 
@@ -154,7 +157,12 @@ done
   [ -d "$d" ] && ROOT="$(cd "$d/.." && pwd)" && break
 done
 # 4. Cloud-linked session: plugins sync into the cloud container, NOT into /sessions/*/mnt.
-[ -z "$ROOT" ] && for d in "$HOME"/.claude/plugins/synced/*/skills/$SKILL \
+#    The real layout nests the plugin name under the sync id:
+#      ~/.claude/plugins/synced/<sync-id>/<plugin-name>/skills/<skill>
+#    Verified 2026-09-03 — an earlier glob was one level short and printed NOT FOUND.
+[ -z "$ROOT" ] && for d in "$HOME"/.claude/plugins/synced/*/*/skills/$SKILL \
+                           "$HOME"/.claude/plugins/synced/*/skills/$SKILL \
+                           "$HOME"/.claude/plugins/*/*/skills/$SKILL \
                            "$HOME"/.claude/plugins/*/skills/$SKILL; do
   [ -d "$d" ] && ROOT="$(cd "$d/../.." && pwd)" && break
 done

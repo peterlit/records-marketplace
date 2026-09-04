@@ -138,6 +138,11 @@ def main():
     ap.add_argument("--cloud", default="", help="deprecated free-text alias for --provider")
     ap.add_argument("--obsidian", action="store_true")
     ap.add_argument("--memory", action="store_true", help="explicit consent to seed memory")
+    ap.add_argument("--force", action="store_true",
+                    help="DESTRUCTIVE. Scaffold even though the target already looks like a "
+                         "records project. Overwrites CLAUDE.md, the Master Summary, the "
+                         "settled register, every question list and every folder note with "
+                         "fresh templates. Use --reconfigure instead unless you mean it.")
     ap.add_argument("--plugin-version", dest="plugin_version", default=None,
                     help="Stamp this version instead of reading .claude-plugin/plugin.json. "
                          "For bridged runs where only scripts/ and templates/ were copied.")
@@ -154,6 +159,25 @@ def main():
                          "chronicle. Refuses to run unless .records-project.json exists, "
                          "so it can never be mistaken for a fresh scaffold over live data.")
     a = ap.parse_args()
+
+    # A rescaffold over a live vault silently reset the Master Summary, the question
+    # lists and the Timeline to templates and exited 0. The only guard was a sentence
+    # in SKILL.md, and prose is not a guard. Refuse in code.
+    if not a.reconfigure and not a.force:
+        _marks = [m for m in (".records-project.json", "CLAUDE.md", "01 Master")
+                  if os.path.exists(os.path.join(a.target, m))]
+        if _marks:
+            print(f"FAIL {a.target} is already a records project (found: {', '.join(_marks)}).")
+            print("     Scaffolding would overwrite the Master Summary, the settled register,")
+            print("     every question list and every folder note with empty templates.")
+            print("     Use --reconfigure to re-render CLAUDE.md safely, or --force if you")
+            print("     really do intend to destroy the existing record.")
+            return 2
+        if os.path.isdir(a.target):
+            _other = [e for e in os.listdir(a.target) if not e.startswith(".")]
+            if _other:
+                print(f"  WARN {a.target} is not empty ({len(_other)} entries). Scaffolding "
+                      f"alongside existing content; nothing of yours is removed.")
 
     # --reconfigure must not silently blank the control panel. `ctx` is derived
     # from `a` further down, so restoration has to happen HERE, before any of it.

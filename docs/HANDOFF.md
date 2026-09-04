@@ -89,6 +89,18 @@ failure with a specific message, and `bootstrap-records-project` Step 1.5 now fo
 improvisations — no filesystem sweeps, and never across `/sessions/*/mnt/`, which can force a
 cloud provider to materialise thousands of files.
 
+## Prose is not a guard (2026-09-03)
+
+Two data-loss bugs in one day, both with the same shape: a rule that existed only in SKILL.md
+text. `--reconfigure` blanked the control panel; `scaffold.py` reset a live vault's Master
+Summary, settled register and question lists to templates and exited 0. Both were "prevented"
+by a sentence telling the model to be careful.
+
+**If a rule protects data, put it in the script.** The model reads instructions and mostly
+follows them; a script refuses every time, including when the model is tired, wrong, or
+improvising around an unrelated failure. Every remaining prose-only safety rule in this plugin
+should be read as an open bug.
+
 ## The `--reconfigure` lesson (2026-09-02)
 
 `--reconfigure` shipped able to blank a real project's `CLAUDE.md` — subject replaced by a

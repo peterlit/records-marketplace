@@ -192,3 +192,30 @@ reported four findings at the end. All four were real.
   protection preflight cannot remove its own canary; it warns and exits 0, which is correct,
   but the file stayed behind. Better to fail loudly than leave litter in someone's vault.
 
+## 0.8.0 — 2026-09-03
+
+- **FIX (data loss, worst yet): `scaffold.py` would silently overwrite a live vault.**
+  Re-running it on an existing project reset the Master Summary, the settled register, every
+  question list and the Timeline to empty templates — no warning, exit 0, success message.
+  A year of curation, gone from one command. **The only guard was a sentence in SKILL.md.**
+  It now refuses in code when the target contains `.records-project.json`, `CLAUDE.md` or
+  `01 Master/`, pointing at `--reconfigure`; `--force` still allows deliberate teardown, and
+  scaffolding *alongside* unrelated pre-existing files warns but proceeds and preserves them.
+  Second prose-only guard to fail in one day, after `--reconfigure`. **If a rule protects
+  data, it belongs in the script, not the instructions.**
+- **FIX: cloud-linked locator was one level short.** The real layout nests the plugin name
+  under the sync id — `~/.claude/plugins/synced/<sync-id>/<plugin>/skills/<skill>` — so the
+  0.7.1 glob printed NOT FOUND. All four depths now tried.
+- **NEW `records-chat-companion`.** Generates paste-ready claude.ai Project instructions so an
+  existing Drive-hosted vault can be consulted away from the computer. Reads
+  `.records-project.json`, so subject, decision-maker, conservatism and language match the
+  authoritative side. The companion reads everything and writes **only** into `03 Inbox/`,
+  marked *not yet filed*, for `file-to-records` to pick up. That restriction is policy, not a
+  technical limit: the connector can curate (create-new → trash-old → rename, byte-fidelity
+  verified), but the chat surface has no preflight, no validator, no snapshot and no 0-byte
+  detection, and cannot see what Cowork is doing.
+- **Connector facts corrected, twice wrong before.** `read_file_content` returns an **empty
+  string** for `text/markdown` — not an error — so a companion using it concludes the record
+  is blank. `download_file_content` round-trips byte-identically (md5 verified). The earlier
+  conclusion that a filesystem-less surface "can comprehend and append, never curate" was false.
+
