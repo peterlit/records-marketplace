@@ -276,6 +276,26 @@
         "Answers normally",
         "Creates no files, mentions no records project"
       ]
+    },
+    {
+      "id": 28,
+      "expect_skill": "records-chat-companion",
+      "prompt": "[inside a records project] I want to be able to ask this stuff from my phone when I'm at the cardiologist.",
+      "expected_output": "Generates paste-ready claude.ai Project instructions.",
+      "expectations": [
+        "Resolves Drive folder ids via the connector rather than guessing",
+        "States the companion captures to 03 Inbox and never edits the record",
+        "Does NOT propose rebuilding the project in a chat"
+      ]
+    },
+    {
+      "id": 29,
+      "expect_skill": null,
+      "prompt": "Can you set up a Claude Project for my book club?",
+      "expected_output": "Ordinary help. records-chat-companion must NOT fire - no records project involved.",
+      "expectations": [
+        "Does not mention records projects or Drive folder ids"
+      ]
     }
   ]
 }
