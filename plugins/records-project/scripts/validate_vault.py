@@ -2,6 +2,13 @@
 """Post-scaffold checks: folder notes present & correctly named, wikilinks resolve, no 0-byte files."""
 import sys, os, re, glob
 
+def slurp(path, errors="strict"):
+    """Read a whole text file and close it. Bare open().read() leaks the handle and
+    fills test output with ResourceWarnings, which trains people to ignore output."""
+    with open(path, encoding="utf-8", errors=errors) as f:
+        return f.read()
+
+
 def load_project_config(root):
     """A vault describes itself in .records-project.json. Before this existed the
     validator guessed conflict patterns by OR-ing every provider's together, which
@@ -52,12 +59,12 @@ for dp,dns,fns in os.walk(root):
         fails.append(f"missing folder note: {os.path.relpath(dp,root)}/{name}.md")
 TEMPLATE_LEFTOVER = re.compile(r"\{\{[#/]?\w")
 for p in md:
-    for n, l in enumerate(open(p, encoding="utf-8").read().split("\n"), 1):
+    for n, l in enumerate(slurp(p).split("\n"), 1):
         if TEMPLATE_LEFTOVER.search(l):
             fails.append(f"UNRENDERED TEMPLATE SYNTAX: {os.path.relpath(p,root)}:{n}: {l.strip()[:60]}")
 for p in md:
     if os.path.getsize(p) == 0: fails.append(f"ZERO-BYTE: {os.path.relpath(p,root)}")
-    for link in re.findall(r"\[\[([^\]|]+)", open(p,encoding="utf-8").read()):
+    for link in re.findall(r"\[\[([^\]|]+)", slurp(p)):
         t = link.split("/")[-1].strip()
         if t not in stems and link.strip() not in stems:
             fails.append(f"broken wikilink [[{link}]] in {os.path.relpath(p,root)}")
@@ -87,7 +94,7 @@ if os.path.isfile(os.path.join(root, ".preflight-canary")):
 lang = (_cfg or {}).get("language", "English")
 if lang.strip().lower() not in ("english", "en"):
     cm = os.path.join(root, "CLAUDE.md")
-    txt = open(cm, encoding="utf-8").read() if os.path.isfile(cm) else ""
+    txt = slurp(cm) if os.path.isfile(cm) else ""
     if "## Language" not in txt or lang not in txt:
         fails.append(
             f"config says language={lang} but CLAUDE.md has no matching '## Language' "

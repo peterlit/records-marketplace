@@ -10,6 +10,13 @@ not exist in the Cowork sandbox.
 """
 import sys, os, re, json, argparse, datetime
 
+def slurp(path, errors="strict"):
+    """Read a whole text file and close it. Bare open().read() leaks the handle and
+    fills test output with ResourceWarnings, which trains people to ignore output."""
+    with open(path, encoding="utf-8", errors=errors) as f:
+        return f.read()
+
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TPL = os.path.join(ROOT, "templates")
 
@@ -322,8 +329,7 @@ def main():
             a.obsidian = True; ctx["obsidian"] = True
 
         eng = write(os.path.join(a.target, "CLAUDE.md"),
-                    render(open(os.path.join(TPL, "core", "CLAUDE.md.tmpl"),
-                                encoding="utf-8").read(), ctx))
+                    render(slurp(os.path.join(TPL, "core", "CLAUDE.md.tmpl")), ctx))
         cfg = dict(old, **_persisted(a, prov, provider, co, shared, PLUGIN_VERSION),
                    reconfigured=today)
         with open(cfg_path, "w", encoding="utf-8") as f:
@@ -338,7 +344,7 @@ def main():
                     _src = os.path.join(_dp, _fn)
                     _rel = os.path.relpath(_src, os.path.join(TPL, "core"))[:-5]
                     write(os.path.join(a.target, _rel),
-                          render(open(_src, encoding="utf-8").read(), ctx))
+                          render(slurp(_src), ctx))
         print(f"reconfigured: provider={old.get('provider')} -> {prov}, "
               f"preset={a.preset}, shared={shared}. "
               "CLAUDE.md and .records-project.json rewritten; no content touched.")
@@ -365,10 +371,10 @@ def main():
             if rel.startswith("_sync") and not shared:
                 continue          # presence markers are a shared-mode concept
             write(os.path.join(a.target, rel),
-                  render(open(src, encoding="utf-8").read(), ctx))
+                  render(slurp(src), ctx))
 
     # one question list per advisor
-    qt = open(os.path.join(pdir, "Questions.md.tmpl"), encoding="utf-8").read()
+    qt = slurp(os.path.join(pdir, "Questions.md.tmpl"))
     for n, r in advisors:
         c = dict(ctx, ADVISOR_NAME=n.strip(), ADVISOR_ROLE=r.strip(), advisor_role=bool(r.strip()))
         write(os.path.join(a.target, "01 Master", f"Questions — {n.strip()}.md"), render(qt, c))

@@ -9,6 +9,13 @@ Never let a bootstrap "run for 15 minutes"; a correct scaffold takes 0.03s.
 """
 import os, sys, time, argparse, shutil
 
+def slurp(path, errors="strict"):
+    """Read a whole text file and close it. Bare open().read() leaks the handle and
+    fills test output with ResourceWarnings, which trains people to ignore output."""
+    with open(path, encoding="utf-8", errors=errors) as f:
+        return f.read()
+
+
 SLOW = 3.0
 
 def timed(label, fn, slow):
@@ -73,7 +80,7 @@ def main():
         for known in ("CLAUDE.md", os.path.join("01 Master", "Master Summary.md")):
             kp = os.path.join(t, known)
             if os.path.isfile(kp):
-                if not open(kp, encoding="utf-8", errors="replace").read().strip():
+                if not slurp(kp, errors="replace").strip():
                     print(f"FAIL {known} exists but reads as empty — do not trust any read "
                           f"from this vault until sync has settled.")
                     return 2
@@ -96,7 +103,7 @@ def main():
         print("     would produce a vault of empty files that reports success.")
         os.remove(probe); return 2
 
-    back, _ = timed("read", lambda: open(probe, encoding="utf-8").read(), slow)
+    back, _ = timed("read", lambda: slurp(probe), slow)
     if back != payload:
         print("FAIL read-back does not match what was written — the sync layer is mangling "
               "content. Stop; do not scaffold."); os.remove(probe); return 2

@@ -26,6 +26,8 @@ normally here, and `sh hooks/install.sh` gives you working pre-commit/pre-push g
 python3 plugins/records-project/tests/test_regressions.py
 ```
 
+**Keep it current with every change** — new behaviour gets a test, a bug gets the test that would have caught it. And mutation-check anything new: break the behaviour, confirm the test fails, restore. A test that has never failed has not been shown to work.
+
 **Every test corresponds to a bug that actually shipped**, and each carries a docstring saying
 what went wrong. A failure is a regression, not a style disagreement — read the docstring before
 changing the test. It is wired into `hooks/pre-push`.

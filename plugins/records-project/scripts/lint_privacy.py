@@ -18,6 +18,13 @@ Fails closed: a missing or empty patterns file is an error, not a pass.
 """
 import sys, os, re, argparse
 
+def slurp(path, errors="strict"):
+    """Read a whole text file and close it. Bare open().read() leaks the handle and
+    fills test output with ResourceWarnings, which trains people to ignore output."""
+    with open(path, encoding="utf-8", errors=errors) as f:
+        return f.read()
+
+
 IDENTITY_OK = {".claude-plugin/plugin.json", ".claude-plugin/marketplace.json",
                "plugin.json", "marketplace.json",
                "LICENSE", "LICENSE.txt", "CHANGELOG.md", "README.md"}
@@ -93,7 +100,7 @@ def main():
             p = os.path.join(dp, fn)
             rel = os.path.relpath(p, root)
             try:
-                txt = open(p, encoding="utf-8").read()
+                txt = slurp(p)
             except (UnicodeDecodeError, OSError):
                 continue
             scanned += 1

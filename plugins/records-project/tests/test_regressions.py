@@ -4,6 +4,15 @@
 **Every test here corresponds to a bug that actually shipped.** The docstring on
 each says what went wrong, so a future failure is legible without archaeology.
 
+**Keep this suite current with every change.** A fix without a test is a fix that
+will be undone by the next person who "simplifies" the code — four of the bugs
+below are variations on the same mistake arriving through different doors. New
+behaviour gets a test; a bug gets the test that would have caught it; a deleted
+feature takes its tests with it.
+
+Prefer mutation-checking a new test: break the behaviour deliberately, confirm the
+test fails, restore. A test that has never failed has not been shown to work.
+
 Stdlib only, to match the constraint on the scripts themselves — no pytest, no
 network, no fixtures beyond tempfile. Runs in a couple of seconds:
 
@@ -52,7 +61,8 @@ def tree_hashes(root, skip=(".records-project.json",)):
             if fn in skip:
                 continue
             p = os.path.join(dp, fn)
-            h[os.path.relpath(p, root)] = hashlib.md5(open(p, "rb").read()).hexdigest()
+            with open(p, "rb") as f:
+                h[os.path.relpath(p, root)] = hashlib.md5(f.read()).hexdigest()
     return h
 
 
@@ -99,7 +109,8 @@ class TestScaffold(Base):
             for fn in fns:
                 if not fn.endswith(".md"):
                     continue
-                body = open(os.path.join(dp, fn), encoding="utf-8").read()
+                with open(os.path.join(dp, fn), encoding="utf-8") as f:
+                    body = f.read()
                 self.assertNotIn("{{", body, f"unrendered syntax in {fn}")
 
 
@@ -251,7 +262,8 @@ class TestTemplateRendering(Base):
         for dp, _, fns in os.walk(os.path.join(PLUGIN, "templates")):
             for fn in fns:
                 if fn.endswith(".tmpl"):
-                    body = open(os.path.join(dp, fn), encoding="utf-8").read()
+                    with open(os.path.join(dp, fn), encoding="utf-8") as fh:
+                        body = fh.read()
                     used |= set(re.findall(r"\{\{#if (\w+)\}\}", body))
         v = build(self.path("v"), "--co-user", "P", "--co-user", "A", "--obsidian")
         # Rendering succeeded, so every condition resolved. Guard the naming rule too.
@@ -271,7 +283,7 @@ class TestValidator(Base):
 
     def test_zero_byte_file_fails(self):
         v = build(self.path("v"), "--obsidian")
-        open(os.path.join(v, "01 Master", "Master Summary.md"), "w").close()
+        self.write_file(os.path.join(v, "01 Master", "Master Summary.md"), "")
         rc, _ = run("validate_vault.py", v)
         self.assertNotEqual(rc, 0)
 
@@ -358,7 +370,7 @@ class TestPreflight(Base):
 
     def test_zero_byte_curated_file_refuses(self):
         v = build(self.path("v"), "--obsidian")
-        open(os.path.join(v, "01 Master", "Master Summary.md"), "w").close()
+        self.write_file(os.path.join(v, "01 Master", "Master Summary.md"), "")
         rc, out = run("preflight.py", v)
         self.assertNotEqual(rc, 0)
         self.assertIn("zero-byte", out.lower())
@@ -530,9 +542,8 @@ class TestMigrate(Base):
         engine = self.read(v, "CLAUDE.md")
         self.assertIn("Anna Petrova", engine)
         self.assertNotIn("the subject", engine)
-        self.assertEqual(self.config(v)["plugin_version"],
-                         json.load(open(os.path.join(PLUGIN, ".claude-plugin",
-                                                     "plugin.json")))["version"])
+        with open(os.path.join(PLUGIN, ".claude-plugin", "plugin.json"), encoding="utf-8") as f:
+            self.assertEqual(self.config(v)["plugin_version"], json.load(f)["version"])
 
     def test_curated_content_is_never_modified(self):
         v = build(self.path("v"), "--subject", "Anna Petrova", "--obsidian")
@@ -573,6 +584,139 @@ class TestMigrate(Base):
         self.assertEqual(self.config(v)["subject"], "Anna Petrova")
 
 
+class TestSnapshot(Base):
+    """snapshot.py had NO test coverage at all, despite being what migrate.py --apply
+    relies on before touching anything. A backup that silently fails is worse than
+    no backup, because it is trusted."""
+
+    def test_creates_a_verifiable_zip(self):
+        import zipfile
+        v = build(self.path("v"), "--obsidian")
+        rc, out = run("snapshot.py", v)
+        self.assertEqual(rc, 0, out)
+        zips = [os.path.join(dp, fn) for dp, _, fns in os.walk(v)
+                for fn in fns if fn.endswith(".zip")]
+        self.assertEqual(len(zips), 1, f"expected exactly one snapshot, got {zips}")
+        self.assertGreater(os.path.getsize(zips[0]), 0, "snapshot landed as 0 bytes")
+        with zipfile.ZipFile(zips[0]) as z:
+            names = z.namelist()
+            self.assertTrue(any("Master Summary" in n for n in names),
+                            "snapshot does not contain the curated record")
+            self.assertTrue(any("CLAUDE.md" in n for n in names))
+
+    def test_excludes_bulk_and_transient_folders(self):
+        import zipfile
+        v = build(self.path("v"), "--obsidian")
+        self.write_file(os.path.join(v, "03 Inbox", "unfiled.md"), "x")
+        os.makedirs(os.path.join(v, "99 Archive"), exist_ok=True)
+        self.write_file(os.path.join(v, "99 Archive", "old.md"), "x")
+        run("snapshot.py", v, expect=0)
+        zips = [os.path.join(dp, fn) for dp, _, fns in os.walk(v)
+                for fn in fns if fn.endswith(".zip")]
+        with zipfile.ZipFile(zips[0]) as z:
+            names = "\n".join(z.namelist())
+        self.assertNotIn("unfiled.md", names, "03 Inbox should not be snapshotted")
+        self.assertNotIn("old.md", names, "99 Archive should not be snapshotted")
+
+    def test_dry_run_writes_nothing(self):
+        v = build(self.path("v"), "--obsidian")
+        before = tree_hashes(v, skip=())
+        run("snapshot.py", v, "--dry-run", expect=0)
+        self.assertEqual(before, tree_hashes(v, skip=()))
+
+    def test_migrate_snapshots_before_applying(self):
+        """The default --apply path was never tested; every earlier check passed
+        --no-snapshot, so migrate's whole safety story was unverified."""
+        v = build(self.path("v"), "--subject", "Anna Petrova", "--obsidian")
+        p = os.path.join(v, ".records-project.json")
+        with open(p, encoding="utf-8") as f:
+            d = json.load(f)
+        self.write_file(p, json.dumps({k: d[k] for k in ("preset", "co_users", "obsidian",
+                                                         "provider", "conflict_patterns",
+                                                         "created") if k in d}
+                                      | {"plugin_version": "0.4.0"}, indent=2))
+        run("migrate.py", v, "--apply", "--subject", "Anna Petrova", "--operator", "Peter",
+            "--decision-maker", "Peter", "--advisor", "Dr. Chen:cardiologist",
+            "--conservatism", "balanced", "--language", "English", "--snapshot", "master",
+            "--provider", "local", expect=0)
+        zips = [fn for dp, _, fns in os.walk(v) for fn in fns if fn.endswith(".zip")]
+        self.assertEqual(len(zips), 1, "migrate --apply did not leave a snapshot behind")
+
+
+class TestGates(Base):
+    """A gate is only a gate if it can fail. Testing only the passing direction is
+    exactly the mistake that let --reconfigure ship: the 'verification' re-supplied
+    every flag, the one case that could not fail."""
+
+    def _mini_repo(self, patterns_body=None, planted=None):
+        root = self.path("repo")
+        os.makedirs(os.path.join(root, "plugins", "p"), exist_ok=True)
+        if planted:
+            self.write_file(os.path.join(root, "plugins", "p", "doc.md"), planted)
+        pat = os.path.join(root, ".privacy-patterns")
+        if patterns_body is not None:
+            self.write_file(pat, patterns_body)
+        return root, pat
+
+    def test_privacy_gate_fails_closed_without_patterns(self):
+        root, pat = self._mini_repo(planted="harmless\n")
+        rc, out = run("lint_privacy.py", "--root", root, "--patterns", pat)
+        self.assertNotEqual(rc, 0, "a missing patterns file must NOT pass")
+        self.assertIn("fails closed", out.lower())
+
+    def test_privacy_gate_fails_closed_on_an_empty_patterns_file(self):
+        root, pat = self._mini_repo(patterns_body="# only comments\n", planted="x\n")
+        rc, _ = run("lint_privacy.py", "--root", root, "--patterns", pat)
+        self.assertNotEqual(rc, 0, "an empty patterns file must NOT pass")
+
+    def test_privacy_gate_catches_a_planted_term(self):
+        root, pat = self._mini_repo(patterns_body="clinical: SECRETDIAGNOSIS\n",
+                                    planted="notes: SECRETDIAGNOSIS present\n")
+        rc, out = run("lint_privacy.py", "--root", root, "--patterns", pat)
+        self.assertNotEqual(rc, 0, "the gate did not catch a planted term")
+        self.assertIn("SECRETDIAGNOSIS", out)
+
+    def test_privacy_gate_passes_a_clean_tree(self):
+        root, pat = self._mini_repo(patterns_body="clinical: SECRETDIAGNOSIS\n",
+                                    planted="nothing sensitive here\n")
+        run("lint_privacy.py", "--root", root, "--patterns", pat, expect=0)
+
+    def test_frontmatter_gate_rejects_a_non_portable_key(self):
+        """Outside Claude Code any key beyond the portable six is a HARD ERROR, so
+        a linter that only ever passes would let an unloadable skill ship."""
+        fake = self.path("plug")
+        os.makedirs(os.path.join(fake, "scripts"))
+        os.makedirs(os.path.join(fake, "skills", "demo"))
+        shutil.copy(os.path.join(SCRIPTS, "lint_frontmatter.py"),
+                    os.path.join(fake, "scripts", "lint_frontmatter.py"))
+        skill = os.path.join(fake, "skills", "demo", "SKILL.md")
+        self.write_file(skill, "---\nname: demo\ndescription: d\nlicense: MIT\n---\nbody\n")
+        ok = subprocess.run([sys.executable, os.path.join(fake, "scripts",
+                                                          "lint_frontmatter.py")],
+                            capture_output=True, text=True)
+        self.assertEqual(ok.returncode, 0, ok.stdout + ok.stderr)
+        self.write_file(skill, "---\nname: demo\ndescription: d\n"
+                               "disable-model-invocation: true\n---\nbody\n")
+        bad = subprocess.run([sys.executable, os.path.join(fake, "scripts",
+                                                           "lint_frontmatter.py")],
+                             capture_output=True, text=True)
+        self.assertNotEqual(bad.returncode, 0, "non-portable key was accepted")
+        self.assertIn("disable-model-invocation", bad.stdout + bad.stderr)
+
+
+class TestPresets(Base):
+    """The core/preset seam is a hypothesis unless the presets demonstrably differ."""
+
+    def test_vocabulary_differs_between_presets(self):
+        health = build(self.path("h"), preset="health", advisors=("Dr. Chen:cardiologist",))
+        generic = build(self.path("g"), preset="generic", advisors=("Jane Okafor:accountant",))
+        h = self.read(health, "CLAUDE.md")
+        g = self.read(generic, "CLAUDE.md")
+        self.assertIn("doctor", h.lower())
+        self.assertIn("advisor", g.lower())
+        self.assertNotIn("doctor", g.lower(), "generic preset leaked medical vocabulary")
+
+
 # ------------------------------------------------------------------- packaging
 
 class TestPackaging(Base):
@@ -592,6 +736,17 @@ class TestPackaging(Base):
             self.assertTrue(os.path.isfile(os.path.join(PLUGIN, "skills", s, "SKILL.md")),
                             f"{s} has no SKILL.md")
 
+    def test_every_script_is_exercised_by_this_suite(self):
+        """Structural guard. snapshot.py had zero coverage for its entire life and
+        nothing noticed — it is what migrate.py --apply trusts before writing."""
+        diagnostic = {"probe.py"}   # records-spike; a builder tool, not a user path
+        with open(os.path.abspath(__file__), encoding="utf-8") as fh:
+            body = fh.read()
+        for fn in sorted(os.listdir(SCRIPTS)):
+            if not fn.endswith(".py") or fn in diagnostic:
+                continue
+            self.assertIn(f'"{fn}"', body, f"{fn} is not exercised by any test")
+
     def test_scripts_are_stdlib_only(self):
         """The scripts must run on any surface, including bridged copies where only
         scripts/ and templates/ were transferred."""
@@ -601,7 +756,8 @@ class TestPackaging(Base):
         for fn in os.listdir(SCRIPTS):
             if not fn.endswith(".py"):
                 continue
-            body = open(os.path.join(SCRIPTS, fn), encoding="utf-8").read()
+            with open(os.path.join(SCRIPTS, fn), encoding="utf-8") as fh:
+                body = fh.read()
             for mod in re.findall(r"^\s*(?:import|from)\s+([A-Za-z_][\w]*)", body, re.M):
                 self.assertIn(mod, allowed, f"{fn} imports non-stdlib '{mod}'")
 

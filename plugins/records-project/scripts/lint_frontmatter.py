@@ -2,11 +2,18 @@
 """Portability linter: outside Claude Code only 6 frontmatter keys are legal.
 Any other key is a HARD ERROR on claude.ai / Cowork / Skills API."""
 import sys, glob, os
+
+def slurp(path, errors="strict"):
+    """Read a whole text file and close it. Bare open().read() leaks the handle and
+    fills test output with ResourceWarnings, which trains people to ignore output."""
+    with open(path, encoding="utf-8", errors=errors) as f:
+        return f.read()
+
 ALLOWED = {"name","description","license","compatibility","metadata","allowed-tools"}
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 fail = 0
 for f in sorted(glob.glob(os.path.join(root,"skills","*","SKILL.md"))):
-    lines = open(f, encoding="utf-8").read().split("\n")
+    lines = slurp(f).split("\n")
     if lines[0].strip() != "---":
         print(f"FAIL {f}: frontmatter must start on line 1"); fail = 1; continue
     end = next((i for i,l in enumerate(lines[1:],1) if l.strip()=="---"), None)

@@ -26,6 +26,13 @@ import argparse
 import subprocess
 import datetime
 
+def slurp(path, errors="strict"):
+    """Read a whole text file and close it. Bare open().read() leaks the handle and
+    fills test output with ResourceWarnings, which trains people to ignore output."""
+    with open(path, encoding="utf-8", errors=errors) as f:
+        return f.read()
+
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 PLUGIN = os.path.dirname(HERE)
 
@@ -62,9 +69,9 @@ def inspect(vault, cfg):
     """Everything that differs from what the current version would build."""
     out = []
     engine_p = os.path.join(vault, "CLAUDE.md")
-    engine = open(engine_p, encoding="utf-8").read() if os.path.isfile(engine_p) else ""
+    engine = slurp(engine_p) if os.path.isfile(engine_p) else ""
     start_p = os.path.join(vault, "00 START HERE.md")
-    start = open(start_p, encoding="utf-8").read() if os.path.isfile(start_p) else ""
+    start = slurp(start_p) if os.path.isfile(start_p) else ""
 
     if cfg is None:
         out.append(Finding(
@@ -326,7 +333,7 @@ def main():
         return 2
     print(f"    curated content verified untouched ({len(before)} files)")
 
-    engine_now = open(os.path.join(a.vault, "CLAUDE.md"), encoding="utf-8").read()
+    engine_now = slurp(os.path.join(a.vault, "CLAUDE.md"))
     for ph in ("the subject", "the owner", "_No advisors recorded yet._"):
         if ph in engine_now:
             print(f"\nFAIL CLAUDE.md now contains the placeholder {ph!r} — a real value was "

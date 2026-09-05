@@ -347,3 +347,29 @@ a phone. Two of these correct guidance that was wrong rather than merely missing
   unknowns refuses *and leaves the name intact*, and that curated content is byte-identical
   after a successful migration. Suite is now 52 tests.
 
+## 0.11.1 — 2026-09-04
+
+Coverage audit rather than coverage-chasing: which gates could stop working without
+anything noticing?
+
+- **`snapshot.py` had zero test coverage for its entire life** — and it is what
+  `migrate.py --apply` trusts before writing. A backup that silently fails is worse than no
+  backup, because it is relied on. Now tested for a verifiable non-empty zip containing the
+  curated record, exclusion of `03 Inbox` and `99 Archive`, and `--dry-run` writing nothing.
+- **`migrate.py`'s default `--apply` path was never exercised** — every earlier check passed
+  `--no-snapshot`, so its whole safety story was unverified. Now tested end to end.
+- **The linters were only tested in the passing direction**, which is exactly the mistake that
+  let `--reconfigure` ship. A gate is only a gate if it can fail. Now tested that the privacy
+  gate **fails closed** on a missing *and* an empty patterns file, catches a planted term, and
+  passes a clean tree; and that the frontmatter linter **rejects** a non-portable key rather
+  than merely accepting good ones.
+- **Preset vocabulary is asserted to differ** — the core/preset seam was a hypothesis, and the
+  generic preset is now checked not to leak medical wording.
+- **Structural guard: every script must be referenced by the suite.** This is what would have
+  caught `snapshot.py`.
+- **Test output is now clean.** The suite emitted 46 `ResourceWarning`s from bare
+  `open(...).read()` calls across the scripts. Noise on every run trains people to stop reading
+  output, which is how a real failure gets missed. All six scripts gained a `slurp()` helper;
+  warnings are now zero.
+- **All five new areas mutation-checked**: each behaviour was deliberately broken, the relevant
+  tests confirmed to fail, then restored. Suite is now **63 tests, ~2.8s**, wired into pre-push.
