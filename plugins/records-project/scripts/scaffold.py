@@ -264,6 +264,7 @@ def main():
         "memory_off": not a.memory, "store_sensitive": a.store_sensitive,
         "gdrive": prov == "gdrive",
         "has_mount_caveat": bool(provider["mount_caveat"]),
+        "local_folder": prov == "local",
         "LANGUAGE": a.language,
         "translated": a.language.strip().lower() not in ("english", "en"),
     }

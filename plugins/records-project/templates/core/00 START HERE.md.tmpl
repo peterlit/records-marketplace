@@ -11,7 +11,60 @@
 - [[06 Reference]] — background, plus the untouched [[Raw Archive]].
 - [[07 Deep Dives]] — research written on demand.
 
-## Things you can type
+## Setting up on your computer
+
+*{{#if shared}}Each co-user does this once, on their own machine. {{/if}}Skip if Claude is
+already working in this folder.*
+
+**1. Make the folder available offline — do this first.**
+{{#if cloud_folder}}
+> **{{CLOUD_PROVIDER}}:** {{PROVIDER_OFFLINE}}
+
+This is not optional housekeeping. A file left in the cloud **reads as an empty file rather
+than erroring**, so Claude sees a blank Master Summary, concludes there is nothing there, and
+writes a "corrected" version over it. {{#if shared}}The setting is per-machine, so your choice
+here affects what {{CO_USER_OTHER}} loses.{{/if}}
+{{/if}}{{#if local_folder}}
+This folder is on local disk, so there is nothing to configure. If you ever move it into
+iCloud, Dropbox, Google Drive or OneDrive, come back and read this section again — and re-run
+`--reconfigure --provider <name>` so the engine picks up that provider's hazards.
+{{/if}}
+
+**2. Point Claude Cowork at this folder.** Open the Claude desktop app → Cowork → **Add Folder**
+→ select **this folder** (the one containing `CLAUDE.md`). Claude reads `CLAUDE.md`
+automatically at the start of every chat here, so there is nothing to paste or configure.
+
+**3. Check that reads are trustworthy** before doing any real work:
+
+> Run preflight on this folder and tell me if anything is wrong.
+
+It writes a canary, reads it back, and refuses if it finds cloud-placeholder or empty files.
+Two seconds, and it is the only check that catches step 1 being wrong.
+
+**4. Your first prompt.** Type:
+
+> orient
+
+You should get a short status of where things stand, drawn from the Master Summary, the settled
+register and the open questions. **If it instead asks you to explain the history, stop** —
+something is wrong with step 1 or 2, and you should not start filing on top of it.
+
+{{#if shared}}
+## You are a co-user, not a guest
+
+You and {{CO_USER_OTHER}} have equal standing here: both file, both ask anything, both may
+settle questions. Three things follow that are easy to get wrong:
+
+- **Read [[02 Chronicle/Prompt Log|Prompt Log]] first each session.** Your Claude account cannot
+  see the other person's chats. The Prompt Log is how you find out what they did — it is this
+  project's shared conversation, and the reason neither of you has to be present for the other's.
+- **Your Claude memory is private and will drift from theirs.** Anything that matters goes in a
+  file in this folder, never in memory alone.
+- **Working from a phone?** Cowork on mobile reaches this folder only while the Claude desktop
+  app is open on *your* computer, and only for a session you **started on desktop**. Start it at
+  your desk, resume it on the phone. Not a sync problem.
+
+{{/if}}## Things you can type
 `orient` · `log only` · `full update` · `no snapshot` · `snapshot now` · `quiet`
 
 The full workflow lives in `CLAUDE.md`. Edit it to change how this project behaves — it is the control panel.

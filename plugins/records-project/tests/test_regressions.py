@@ -413,6 +413,51 @@ class TestSharedMode(Base):
         self.assertNotIn("ACTIVE", out, "a stopped session was reported as active")
 
 
+class TestOnboarding(Base):
+    """00 START HERE.md must onboard a SECOND person on a different machine. The
+    setup that actually matters is provider-specific and, if skipped, produces
+    silent data loss rather than an error."""
+
+    def _start(self, v):
+        return self.read(v, "00 START HERE.md")
+
+    def test_offline_instruction_is_provider_specific(self):
+        expected = {
+            "gdrive": "Available offline",
+            "icloud": "Optimise Mac Storage",
+            "onedrive": "Always keep on this device",
+            "dropbox": "Smart Sync",
+        }
+        for prov, phrase in expected.items():
+            v = build(self.path(prov), "--provider", prov, "--obsidian")
+            self.assertIn(phrase, self._start(v), f"{prov} onboarding lacks its own setup step")
+
+    def test_local_provider_gets_no_cloud_ceremony(self):
+        v = build(self.path("v"), "--provider", "local", "--obsidian")
+        body = self._start(v)
+        self.assertIn("on local disk", body)
+        for phrase in ("Available offline", "Optimise Mac Storage", "Smart Sync"):
+            self.assertNotIn(phrase, body)
+
+    def test_onboarding_names_cowork_setup_and_a_first_prompt(self):
+        v = build(self.path("v"), "--provider", "gdrive", "--obsidian")
+        body = self._start(v)
+        self.assertIn("Add Folder", body, "must say how to point Cowork at the folder")
+        self.assertIn("preflight", body, "must tell a new user to verify reads")
+        self.assertIn("orient", body, "must give a first prompt")
+
+    def test_co_user_guidance_only_in_shared_mode(self):
+        solo = build(self.path("solo"), "--provider", "gdrive", "--obsidian")
+        self.assertNotIn("co-user, not a guest", self._start(solo))
+        shared = build(self.path("shared"), "--provider", "gdrive", "--obsidian",
+                       "--co-user", "Peter", "--co-user", "Anna")
+        body = self._start(shared)
+        self.assertIn("co-user, not a guest", body)
+        self.assertIn("Anna", body, "must name the other co-user")
+        self.assertIn("Prompt Log", body, "must say how to see the other person's work")
+        self.assertIn("started on desktop", body, "must explain the mobile constraint")
+
+
 # ------------------------------------------------------------- chat companion
 
 class TestChatCompanion(Base):

@@ -296,3 +296,30 @@ a phone. Two of these correct guidance that was wrong rather than merely missing
   as a test fixture. **A fixture is as public as any other line of code**, and the packaging
   test now scans the tests too.
 
+## 0.10.0 — 2026-09-04
+
+- **`00 START HERE.md` now onboards a second person**, not just describes the folder. It
+  previously assumed whoever opened it had already set everything up — true for the person who
+  ran bootstrap, false for every co-user after them, and false again for the first person on a
+  new machine.
+
+  Four steps, in the order that matters: (1) make the folder **available offline**, rendered
+  from the provider profile so each storage backend gets its own wording — *"Available offline"*
+  for Drive, *"Turn OFF Optimise Mac Storage"* for iCloud, *"Always keep on this device"* for
+  OneDrive, out of *Smart Sync* for Dropbox, and nothing at all for a local folder; (2) point
+  Cowork at the folder with **Add Folder**; (3) run **preflight** to confirm reads are
+  trustworthy; (4) type **`orient`** as a first prompt, with the failure signal spelled out —
+  *if Claude asks you to explain the history instead, stop.*
+
+  Step 1 leads because skipping it does not produce an error. A cloud-placeholder file **reads
+  as empty and succeeds**, so Claude sees a blank Master Summary and writes a "corrected"
+  version over it. In shared mode the note adds that the setting is per-machine, so one
+  co-user's choice determines what the other loses.
+- **Shared vaults get a co-user orientation**: read the Prompt Log first because your account
+  cannot see the other person's chats; your Claude memory is private and will drift; and Cowork
+  on mobile reaches the folder only while your desktop app is open, for a session started on
+  desktop — which looks like a sync failure and isn't.
+- **Five onboarding tests** covering provider-specific wording, local getting no cloud ceremony,
+  the presence of the Cowork step / preflight step / first prompt, and co-user guidance
+  appearing only in shared mode.
+
