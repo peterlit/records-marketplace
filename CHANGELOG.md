@@ -219,3 +219,55 @@ reported four findings at the end. All four were real.
   is blank. `download_file_content` round-trips byte-identically (md5 verified). The earlier
   conclusion that a filesystem-less surface "can comprehend and append, never curate" was false.
 
+## 0.8.1 — 2026-09-03
+
+Three bugs found in scratch testing, all in shared mode — which had never been exercised
+end-to-end from the interview onward.
+
+- **FIX (systemic): `{{#if}}` failed silently while `{{VAR}}` failed loudly.** `{{VAR}}` raised
+  `KeyError` on an unknown key, but `{{#if X}}` used `ctx.get()`, so a mistyped condition
+  deleted its block instead of erroring. That is how `{{#if SHARED}}` (context key is lowercase
+  `shared`) dropped the `records-sync-status` row from **every** shared project's skills table —
+  the one row telling co-users how to check whether the other is working. Both forms now raise.
+  The typo was the symptom; the asymmetry was the bug.
+- **FIX: the interview never asked about co-users.** Steps 1–13 covered operator,
+  decision-maker, advisors and consent, but nothing prompted for co-users, so a model following
+  the skill would only ever build a solo project unless the user volunteered the idea — making
+  shared mode effectively unreachable through its own front door. Now asked directly, with the
+  peer-not-helper distinction and a warning that one `--co-user` silently stays solo.
+- **FIX: `--reconfigure` into shared mode produced an invalid vault.** It created `_sync/` with
+  `os.makedirs` but skipped the template walk that writes `_sync/_sync.md`, so
+  `validate_vault.py` failed immediately with `missing folder note`. Fresh shared scaffolds were
+  fine; only the retrofit path was broken — the path someone uses when a project becomes shared
+  later, which is the common case.
+
+## 0.9.0 — 2026-09-04
+
+Shared-mode hardening, after establishing how Cowork actually reaches a local folder from
+a phone. Two of these correct guidance that was wrong rather than merely missing.
+
+- **NEW: preflight proves reads, not just writes.** The canary only ever demonstrated that a
+  *new* file could be written — it said nothing about the files already there. On a synced
+  vault an evicted file **reads as 0 bytes rather than erroring**, and the danger is not a
+  failed read but a successful-looking empty one that gets summarised and written back,
+  destroying the file for every co-user. `preflight.py` now refuses on any existing vault
+  containing eviction stubs, zero-byte markdown, or a `CLAUDE.md`/Master Summary that reads
+  empty. **The re-read-before-write rule assumed reads were honest; on a cloud mount they are
+  not.**
+- **FIX: eviction was reported as a sync conflict.** Both surfaced as `SYNC CONFLICT COPY`,
+  sending people to look for a merge that does not exist. They are now distinct: forks say
+  *"the record has forked"*, evictions say *"turn OFF Optimise Mac Storage"*. Old vaults with
+  the pattern baked into their config are handled too.
+- **CORRECTS the iCloud sharing guidance.** The profile said *"awkward for multi-user work;
+  prefer Dropbox or Drive"* — reasoning from the absence of a connector. **Cowork does not need
+  a connector; it reads the local filesystem.** iCloud folder sharing with "Can make changes"
+  is a first-class option for co-users. The real requirement is that **"Optimise Mac Storage"
+  is off on BOTH machines**, since eviction is per-machine and one co-user's setting can empty
+  files the other depends on.
+- **NEW: the shared block explains working from a phone.** Cowork on mobile/web reaches a
+  connected folder only while the desktop app is open on that machine *and* the session was
+  started on desktop — a project tied to a local folder cannot start a Cowork session from
+  mobile. Start on the computer, resume from the phone; `Dispatch → Get started` has the
+  keep-awake toggle. Written down because "Claude can't see the folder from my phone" looks
+  exactly like a sync failure and isn't one.
+

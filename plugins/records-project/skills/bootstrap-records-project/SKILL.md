@@ -81,6 +81,15 @@ Ask these as **one or two batched multiple-choice rounds**, not an interrogation
 4. **Who decides?** Name the decision-maker → `--decision-maker`. ⚠️ **Do not assume it is the person typing.** A daughter managing her father's care is not the decision-maker; he is. This changes how Claude frames every recommendation thereafter, so it is worth one direct question.
 5. **Who operates the project?** (whoever is doing the filing) → `--operator`.
 6. **The advisors** — names and roles → repeated `--advisor "Name:role"`. Each gets a question list, pre-split Urgent / Next / Settled.
+6b. **Will anyone else work in this project?** → repeated `--co-user "Name"`. **Ask this; do not
+   wait to be told.** Two or more co-users switches the engine into shared mode: presence
+   markers in `_sync/`, the re-read-before-write rule, and memory kept in the folder rather than
+   in either account. Retrofitting later works (`--reconfigure --co-user A --co-user B`) but the
+   framing of every generated file changes, so it is much better to know now.
+   ⚠️ **A co-user is a peer, not a helper** — someone who both contributes *and* interrogates
+   the record. A spouse managing care together is a co-user; a relative you occasionally forward
+   a PDF to is not. Do not pass `--co-user` for one person: shared mode needs two or more, and
+   one name silently stays solo.
 7. **Conservatism dial** → `--conservatism conservative|balanced|interventionist`. Frame it plainly: *"When there's a choice between watchful waiting and an invasive procedure, how do you want options presented?"* Default `balanced`. This is the decision-maker's call, not the operator's.
 8. **One-line situation summary** → `--situation`, seeds the Master Summary.
 

@@ -89,6 +89,23 @@ failure with a specific message, and `bootstrap-records-project` Step 1.5 now fo
 improvisations — no filesystem sweeps, and never across `/sessions/*/mnt/`, which can force a
 cloud provider to materialise thousands of files.
 
+## Reads are not trustworthy on a cloud mount (2026-09-04)
+
+Every safety rule in this plugin — re-read-before-write, check the settled register, flag
+conflicts rather than overwrite — assumes that reading a file returns what is in it. On an
+evicted cloud file the read returns **empty and succeeds**. So the guard rails hold hands with
+a lie: Claude reads the Master Summary as blank, concludes there is nothing there, and writes
+a "corrected" version over it. `preflight.py` now tests reads on an existing vault for exactly
+this. **When adding a safety rule, ask what it assumes about I/O.**
+
+## Silent failure beats loud failure to the door (2026-09-03)
+
+`{{VAR}}` raised on an unknown key; `{{#if}}` returned falsy and deleted the block. One typo
+therefore removed a whole row from every shared project and nothing complained. **When two
+forms of the same mechanism have different failure modes, the quiet one is where the bugs
+live.** Both raise now. Worth auditing anything else in here that degrades quietly rather than
+stopping — a `.get()` with a default on a required key is the shape to look for.
+
 ## Prose is not a guard (2026-09-03)
 
 Two data-loss bugs in one day, both with the same shape: a rule that existed only in SKILL.md

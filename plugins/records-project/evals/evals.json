@@ -296,6 +296,17 @@
       "expectations": [
         "Does not mention records projects or Drive folder ids"
       ]
+    },
+    {
+      "id": 30,
+      "expect_skill": "bootstrap-records-project",
+      "prompt": "/records-project:bootstrap-records-project - my sister and I are both going to be managing our father's care.",
+      "expected_output": "Shared-mode project: two co-users, _sync/, in-folder memory.",
+      "expectations": [
+        "Asks about co-users rather than waiting to be told",
+        "Passes --co-user twice; one name silently stays solo",
+        "Still asks who the DECISION-MAKER is - the father, not either sibling"
+      ]
     }
   ]
 }

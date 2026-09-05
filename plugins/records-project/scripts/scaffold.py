@@ -43,7 +43,13 @@ INNERMOST_IF = re.compile(r"\{\{#if (\w+)\}\}((?:(?!\{\{#if )[\s\S])*?)\{\{/if\}
 
 def render(text, ctx):
     def block(m):
-        return m.group(2) if ctx.get(m.group(1)) else ""
+        key = m.group(1)
+        # {{VAR}} raises on an unknown key but {{#if}} used ctx.get(), so a typo
+        # silently deleted the block instead of failing. That shipped: {{#if SHARED}}
+        # dropped the records-sync-status row from every shared project.
+        if key not in ctx:
+            raise KeyError(f"template condition {{{{#if {key}}}}} is not a context key")
+        return m.group(2) if ctx[key] else ""
     for _ in range(20):
         text, n = INNERMOST_IF.subn(block, text)
         if not n:
@@ -323,6 +329,15 @@ def main():
             json.dump(cfg, f, indent=2); f.write("\n")
         if shared:
             os.makedirs(os.path.join(a.target, "_sync"), exist_ok=True)
+            # mkdir alone left the folder note missing and the validator failing.
+            for _dp, _, _fns in os.walk(os.path.join(TPL, "core", "_sync")):
+                for _fn in sorted(_fns):
+                    if not _fn.endswith(".tmpl"):
+                        continue
+                    _src = os.path.join(_dp, _fn)
+                    _rel = os.path.relpath(_src, os.path.join(TPL, "core"))[:-5]
+                    write(os.path.join(a.target, _rel),
+                          render(open(_src, encoding="utf-8").read(), ctx))
         print(f"reconfigured: provider={old.get('provider')} -> {prov}, "
               f"preset={a.preset}, shared={shared}. "
               "CLAUDE.md and .records-project.json rewritten; no content touched.")

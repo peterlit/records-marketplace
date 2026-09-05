@@ -47,6 +47,38 @@ def main():
               f"{', '.join(sorted(existing)[:6])}{' …' if len(existing) > 6 else ''}")
         print("       Confirm with the person before scaffolding into it.")
 
+    # A canary proves you can WRITE. It says nothing about whether the files already
+    # there can be READ. On a cloud-synced vault an evicted file reads as 0 bytes, and
+    # the danger is not a failed read - it is a successful-looking empty one that gets
+    # summarised and written back. Check before trusting any read.
+    if os.path.isfile(os.path.join(t, ".records-project.json")):
+        stubs, empties = [], []
+        for dp, dns, fns in os.walk(t):
+            dns[:] = [d for d in dns if d not in (".obsidian", ".git")]
+            for fn in fns:
+                fp = os.path.join(dp, fn)
+                if fn.endswith(".icloud"):
+                    stubs.append(os.path.relpath(fp, t))
+                elif fn.endswith(".md") and os.path.getsize(fp) == 0:
+                    empties.append(os.path.relpath(fp, t))
+        if stubs:
+            print(f"FAIL {len(stubs)} evicted file(s), e.g. {stubs[0]}")
+            print("     They are cloud-only and will read as 0 bytes. Turn OFF 'Optimise Mac")
+            print("     Storage' for this folder and let it re-download before doing anything.")
+            return 2
+        if empties:
+            print(f"FAIL {len(empties)} zero-byte markdown file(s), e.g. {empties[0]}")
+            print("     Either a failed write or an evicted file. Do not read or rewrite them.")
+            return 2
+        for known in ("CLAUDE.md", os.path.join("01 Master", "Master Summary.md")):
+            kp = os.path.join(t, known)
+            if os.path.isfile(kp):
+                if not open(kp, encoding="utf-8", errors="replace").read().strip():
+                    print(f"FAIL {known} exists but reads as empty — do not trust any read "
+                          f"from this vault until sync has settled.")
+                    return 2
+        print("  existing vault: no evicted or empty files; reads are trustworthy")
+
     probe = os.path.join(t, ".preflight-canary")
     payload = f"canary {time.time()}\n"
     try:

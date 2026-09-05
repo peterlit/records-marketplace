@@ -2,16 +2,20 @@
   "name": "icloud",
   "display": "iCloud Drive",
   "path_hint": "~/Library/Mobile Documents/com~apple~CloudDocs/<folder>",
-  "mount_caveat": "Mounts, but see hazards — this provider has caused the most trouble in practice.",
+  "mount_caveat": "Mounts, but see hazards \u2014 this provider has caused the most trouble in practice.",
   "offline_requirement": "Turn OFF \"Optimise Mac Storage\" for this folder, or files get evicted and read as 0 bytes.",
-  "conflict_patterns": ["\\s\\d+\\.md$", "\\.icloud$"],
+  "conflict_patterns": [
+    "\\s\\d+\\.md$",
+    "\\.icloud$"
+  ],
   "connector": null,
   "connector_can_delete": false,
   "delete_note": "No iCloud connector exists. Use `allow_cowork_file_delete`; there is no fallback.",
   "hazards": [
     "Cloud-only files copy as 0 BYTES and fail silently. Always verify size > 0 after any copy.",
     "The `zip` binary fails on its rename step. Build archives in scratch with Python's zipfile, then copy in.",
-    "No connector, so deletion has no fallback path if Cowork's permission prompt is declined."
+    "No connector, so deletion has no fallback path if Cowork's permission prompt is declined.",
+    "SHARED MODE: eviction is per-machine. A co-user with 'Optimise Mac Storage' on reads curated files as 0 bytes; summarising that empty read and writing it back destroys the file for everyone. Run preflight.py before trusting any read."
   ],
-  "sharing": "iCloud folder sharing is possible but awkward for multi-user work. Prefer Dropbox or Drive if sharing."
+  "sharing": "iCloud folder sharing works for co-users: share the folder with 'Can make changes' and each person's Mac syncs a local copy Cowork can mount. No connector exists, but Cowork does not need one - it reads the local filesystem. The real requirement is that 'Optimise Mac Storage' is OFF for this folder ON BOTH MACHINES: it is a per-machine setting, so one co-user's choice can silently evict files the other relies on."
 }

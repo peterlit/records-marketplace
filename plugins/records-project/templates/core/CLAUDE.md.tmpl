@@ -38,6 +38,20 @@ Read, in order: **this file → memory (MEMORY.md + files) → [[01 Master/Maste
 **Claude's account memory is per-user and private{{#if shared}}; with more than one co-user it diverges immediately{{/if}}.** These files are the shared, inspectable, snapshot-able record. **If account memory and a file disagree, the file wins.** Never leave anything load-bearing in account memory alone.
 {{#if shared}}
 ## Sessions announce themselves — `_sync/` presence markers
+**Working from a phone or the web.** Cowork on mobile/web reaches this folder only while the
+Claude desktop app is **open on the machine that has it**, and only for a session that was
+**started on desktop** — a project tied to a local folder cannot start a Cowork session from
+mobile. So: start the session on the computer, resume it from the phone. `Dispatch → Get started`
+in the desktop app has a *keep your computer awake* toggle, which is what stops the Mac sleeping
+mid-appointment. If a co-user says Claude cannot see the folder from their phone, this is why —
+not sync.
+
+**Before trusting anything you read here, run `preflight.py`.** {{#if cloud_folder}}On
+{{CLOUD_PROVIDER}} a file that has been evicted to the cloud reads as **0 bytes rather than
+erroring**. The danger is not a failed read — it is a successful-looking empty one that gets
+summarised and written back, destroying the file for both co-users. Eviction settings are
+per-machine, so the other person's configuration can do this to your copy.{{/if}}
+
 **At the start of a session:** list `_sync/`. If another co-user has a `started` marker with no matching `stopped`, and it is **less than 4 hours old**, say so — *"{{CO_USER_OTHER}} started 12 minutes ago; they may be working right now."* **Report it; do not refuse to proceed.** Then write your own marker:
 
 `_sync/<ISO-8601-UTC>__<your-name>__started.md` — body: surface, and one line on what you intend to do.
@@ -139,7 +153,7 @@ it by name:
 | Something new arrives — a file in [[03 Inbox]], or a result/message pasted in chat | `records-project:file-to-records` |
 | The new content quotes a recommendation from {{AN_ADVISOR}} | `records-project:records-critique` |
 | "What am I missing?", a pre-appointment review, or a lot has been filed since the last one | `records-project:records-gap-audit` |
-{{#if SHARED}}| Checking whether a co-user is working right now, or conflict copies appear | `records-project:records-sync-status` |
+{{#if shared}}| Checking whether a co-user is working right now, or conflict copies appear | `records-project:records-sync-status` |
 {{/if}}
 **If the plugin is not installed, do the work inline anyway.** Every step is written out above;
 the skills are a fuller version of the same instructions, not a dependency. A project whose

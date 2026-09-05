@@ -24,6 +24,9 @@ def check_sync_conflicts(root, patterns=None):
     """Cloud sync clients resolve simultaneous writes by DUPLICATING files.
     Two Cowork instances on one synced folder is exactly that case.
     Reconciling on top of conflicted copies silently forks the record."""
+    # An .icloud stub is an EVICTED file, not a forked one. Older vaults have the
+    # pattern baked into their config; strip it so the two are never conflated.
+    patterns = [q for q in (patterns or []) if "icloud" not in q.lower()] or None
     pat = re.compile("|".join(patterns), re.I) if patterns else SYNC_CONFLICT
     bad = []
     for dp, dns, fns in os.walk(root):
@@ -63,7 +66,17 @@ _pats = (_cfg or {}).get("conflict_patterns")
 if _cfg is None:
     print("  note: no .records-project.json - using generic conflict patterns")
 for c in check_sync_conflicts(root, _pats):
-    fails.append(f"SYNC CONFLICT COPY: {c}  <- resolve before reconciling")
+    fails.append(f"SYNC CONFLICT COPY: {c}  <- the record has forked; resolve before reconciling")
+
+# Eviction is a DIFFERENT failure with a different fix, and conflating them sends
+# people hunting for a merge that does not exist.
+_evicted = sorted(os.path.relpath(os.path.join(dp, fn), root)
+                  for dp, _, fns in os.walk(root) for fn in fns if fn.endswith(".icloud"))
+if _evicted:
+    fails.append(f"EVICTED (cloud-only, reads as 0 bytes): {len(_evicted)} file(s), e.g. "
+                 f"{_evicted[0]}  <- turn OFF 'Optimise Mac Storage' for this folder. "
+                 f"Do NOT let Claude read or rewrite these; an empty read looks like an "
+                 f"empty file.")
 if not md:
     fails.append(f"no markdown files found under {root} - scaffold did not run?")
 # A non-English project must carry its standing language rule in CLAUDE.md; without it
