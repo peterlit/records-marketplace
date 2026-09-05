@@ -271,3 +271,28 @@ a phone. Two of these correct guidance that was wrong rather than merely missing
   keep-awake toggle. Written down because "Claude can't see the folder from my phone" looks
   exactly like a sync failure and isn't one.
 
+## 0.9.1 — 2026-09-04
+
+- **NEW: a regression suite — 40 tests, ~1.5s, stdlib only.**
+  `plugins/records-project/tests/test_regressions.py`. **Every test corresponds to a bug that
+  actually shipped**, and each carries a docstring saying what went wrong, so a future failure
+  is legible without archaeology. Wired into `hooks/pre-push`.
+
+  Covered: scaffolding over a live vault (and that the refusal touches zero bytes); bare
+  `--reconfigure` as a byte-level no-op; one-field reconfigure preserving subject, advisors,
+  decision-maker, conservatism and language; every rendered field being persisted;
+  `{{#if}}`/`{{VAR}}` both raising on unknown keys, plus a sweep asserting no template
+  condition is upper-case; validator rejecting a nonexistent folder, 0-byte files, language
+  drift and a leftover canary; eviction and forks producing *different* messages; the OneDrive
+  false positive on the settled register; preflight refusing an evicted or 0-byte vault;
+  one co-user staying solo while two enable shared; the `_sync` folder note on the reconfigure
+  retrofit; the started/stopped tie-break at equal timestamps; the chat companion refusing a
+  non-project and naming `download_file_content`; and every script importing stdlib only.
+
+  **Mutation-checked**: reverting the overwrite guard makes the suite fail, so it is testing
+  behaviour rather than asserting tautologies.
+
+  The suite's first run failed — on itself. `lint_privacy.py` caught a real clinical value used
+  as a test fixture. **A fixture is as public as any other line of code**, and the packaging
+  test now scans the tests too.
+

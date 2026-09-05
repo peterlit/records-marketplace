@@ -6,6 +6,7 @@ cp "$ROOT/hooks/pre-commit" "$ROOT/.git/hooks/pre-commit"
 chmod +x "$ROOT/.git/hooks/pre-commit"
 chmod +x "$ROOT/.git/hooks/pre-push"
 echo "pre-push and pre-commit hooks installed."
+echo "pre-push runs: privacy gate, frontmatter linter, regression suite."
 if [ ! -f "$ROOT/.privacy-patterns" ]; then
   cp "$ROOT/.privacy-patterns.example" "$ROOT/.privacy-patterns"
   echo "created .privacy-patterns from the example - EDIT IT with your real terms."

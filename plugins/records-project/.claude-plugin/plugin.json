@@ -1,7 +1,7 @@
 {
   "name": "records-project",
   "displayName": "Records Project",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Bootstrap and run a structured personal records project with an Obsidian-friendly vault and a durable filing workflow.",
   "author": {
     "name": "Peter Litskevitch"

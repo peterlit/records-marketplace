@@ -20,6 +20,23 @@ normally here, and `sh hooks/install.sh` gives you working pre-commit/pre-push g
 
 ## Verify before trusting anything
 
+**Run the regression suite first — it is the fastest signal in the repo (~1.5s, 40 tests):**
+
+```bash
+python3 plugins/records-project/tests/test_regressions.py
+```
+
+**Every test corresponds to a bug that actually shipped**, and each carries a docstring saying
+what went wrong. A failure is a regression, not a style disagreement — read the docstring before
+changing the test. It is wired into `hooks/pre-push`.
+
+The suite exists because a dozen real bugs were found in one day by hand, and every one of those
+manual checks was then thrown away. Two of them were data-loss (`--reconfigure` blanking the
+control panel; `scaffold.py` resetting a live vault) and both had passed an earlier ad-hoc
+"verification" that could not fail. If you fix something here, add the test that would have
+caught it.
+
+
 ```bash
 P=plugins/records-project
 python3 $P/scripts/lint_frontmatter.py                    # portable 6-key SKILL.md frontmatter
