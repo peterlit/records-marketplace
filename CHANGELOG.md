@@ -373,3 +373,29 @@ anything noticing?
   warnings are now zero.
 - **All five new areas mutation-checked**: each behaviour was deliberately broken, the relevant
   tests confirmed to fail, then restored. Suite is now **63 tests, ~2.8s**, wired into pre-push.
+
+## 0.12.0 — 2026-09-04
+
+Enumerating the conversion matrix — every mode against every other — found three bugs that
+testing any single feature would have missed. All three traced to **a legacy piecemeal restore
+block that survived the 0.7.1 rewrite** and ran *after* the new parse-time restore, overriding
+explicit flags.
+
+- **FIX: `--reconfigure --preset generic` was silently ignored.** The old heuristic ("if preset
+  is the default, restore from config") reverted the explicit flag and reported success. Preset
+  changes are now **refused in code**: the presets use different folder names, so a re-render
+  leaves the engine and the folders disagreeing — and the validator cannot see that.
+- **FIX: shared → solo was a one-way door.** Co-users could never be removed, because omitting
+  `--co-user` means *keep* and the legacy block re-populated them from config. Added `--solo`.
+- **FIX: Obsidian could be turned on but never off.** Added `--no-obsidian`.
+
+  The general rule, now written into the tests: **omitting a flag means KEEP, so anything that
+  can be switched on needs an explicit way to switch it off** — otherwise a vault can only ever
+  gain settings. Any new boolean needs the same treatment.
+- **NEW `docs/MODES.md`** — the full dimension list, the conversion table with what is *not*
+  supported and why, and an honest account of which combinations have seen real use. Short
+  version: one hand-built vault over a year, one real bootstrap, and **zero two-person shared
+  runs** despite shared being the most bug-prone area.
+- **Five conversion tests** including a solo→shared→solo→shared round trip and all 5 providers ×
+  both modes. Mutation-checked. Suite is now **68 tests**.
+

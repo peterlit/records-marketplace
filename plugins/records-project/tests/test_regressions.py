@@ -717,6 +717,67 @@ class TestPresets(Base):
         self.assertNotIn("doctor", g.lower(), "generic preset leaked medical vocabulary")
 
 
+class TestModeConversions(Base):
+    """SHIPPED: a legacy piecemeal restore block survived the 0.7.1 rewrite and ran
+    AFTER the new parse-time restore, silently overriding explicit flags.
+    --preset generic was reverted to the stored preset and reported SUCCESS, and
+    co-users could never be removed. Found by enumerating the conversion matrix
+    rather than by testing any single feature.
+
+    General rule these lock in: **omitting a flag means KEEP, so every setting that
+    can be turned on needs an explicit way to turn it off.** Otherwise a vault can
+    only ever gain settings."""
+
+    def test_solo_to_shared_and_back(self):
+        v = build(self.path("v"), "--obsidian")
+        self.assertFalse(self.config(v)["shared"])
+        run("scaffold.py", v, "--reconfigure", "--co-user", "P", "--co-user", "Q", expect=0)
+        self.assertTrue(self.config(v)["shared"])
+        self.assertIn("records-sync-status", self.read(v, "CLAUDE.md"))
+        run("scaffold.py", v, "--reconfigure", "--solo", expect=0)
+        cfg = self.config(v)
+        self.assertFalse(cfg["shared"], "--solo did not return the vault to solo mode")
+        self.assertEqual(cfg["co_users"], [])
+        self.assertNotIn("records-sync-status", self.read(v, "CLAUDE.md"))
+        run("scaffold.py", v, "--reconfigure", "--co-user", "X", "--co-user", "Y", expect=0)
+        self.assertEqual(self.config(v)["co_users"], ["X", "Y"])
+        self.assertIn("vault valid", run("validate_vault.py", v, expect=0)[1])
+
+    def test_obsidian_can_be_turned_off(self):
+        v = build(self.path("v"), "--obsidian")
+        self.assertTrue(self.config(v)["obsidian"])
+        run("scaffold.py", v, "--reconfigure", "--no-obsidian", expect=0)
+        self.assertFalse(self.config(v)["obsidian"])
+
+    def test_preset_change_is_refused_not_silently_ignored(self):
+        """Presets use different folder names (Results/Visits vs Records/Meetings),
+        so a re-render would leave the engine and the folders disagreeing — and the
+        validator cannot see that."""
+        v = build(self.path("v"), "--obsidian", preset="health")
+        rc, out = run("scaffold.py", v, "--reconfigure", "--preset", "generic")
+        self.assertNotEqual(rc, 0, "preset change must refuse, not no-op")
+        self.assertIn("cannot change preset", out)
+        self.assertEqual(self.config(v)["preset"], "health")
+
+    def test_provider_and_language_convert_together(self):
+        v = build(self.path("v"), "--provider", "icloud", "--obsidian")
+        run("scaffold.py", v, "--reconfigure", "--provider", "gdrive",
+            "--language", "Polish", expect=0)
+        cfg = self.config(v)
+        self.assertEqual(cfg["provider"], "gdrive")
+        self.assertEqual(cfg["language"], "Polish")
+        self.assertIn("## Language", self.read(v, "CLAUDE.md"))
+        self.assertIn("vault valid", run("validate_vault.py", v, expect=0)[1])
+
+    def test_every_provider_builds_and_validates(self):
+        for prov in ("gdrive", "dropbox", "icloud", "onedrive", "local"):
+            for extra in ([], ["--co-user", "P", "--co-user", "Q"]):
+                v = build(self.path(f"{prov}{len(extra)}"), "--provider", prov,
+                          "--obsidian", *extra)
+                self.assertIn("vault valid", run("validate_vault.py", v, expect=0)[1],
+                              f"{prov} shared={bool(extra)} did not validate")
+
+
 # ------------------------------------------------------------------- packaging
 
 class TestPackaging(Base):

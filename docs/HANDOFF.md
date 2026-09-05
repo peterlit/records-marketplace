@@ -146,6 +146,17 @@ the only meaningful test is the one that mentions nothing.** `_persisted()` is n
 source of what a vault remembers; if a field renders into `CLAUDE.md` and is not in there, the
 bug is back.
 
+## Read `docs/MODES.md` before adding a mode
+
+It lists every dimension, every supported conversion, and — more usefully — the combinations
+that have **never been run by a real person**. The suite covers all 5 providers × 2 modes and
+every conversion, but it protects against *regression*, not *unfitness*. Both real-use
+bootstraps so far produced multiple bugs the suite would never have caught, because they were
+of the form "this does not survive contact with a real person".
+
+**The two highest-value things are not tests**: one shared, two-person project run for a month,
+and one `generic` project for a real non-medical case.
+
 ## What's next
 
 - **Refresh the installed plugin and use it for real.** The Update button greys out because

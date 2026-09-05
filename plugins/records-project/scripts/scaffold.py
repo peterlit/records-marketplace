@@ -151,6 +151,13 @@ def main():
     ap.add_argument("--cloud", default="", help="deprecated free-text alias for --provider")
     ap.add_argument("--obsidian", action="store_true")
     ap.add_argument("--memory", action="store_true", help="explicit consent to seed memory")
+    ap.add_argument("--solo", action="store_true",
+                    help="With --reconfigure: drop all co-users and return to solo mode. "
+                         "Omitting --co-user keeps the existing ones, so this is the only "
+                         "way back.")
+    ap.add_argument("--no-obsidian", action="store_true",
+                    help="With --reconfigure: turn the Obsidian setting off. Omitting "
+                         "--obsidian keeps it on.")
     ap.add_argument("--force", action="store_true",
                     help="DESTRUCTIVE. Scaffold even though the target already looks like a "
                          "records project. Overwrites CLAUDE.md, the Master Summary, the "
@@ -224,6 +231,12 @@ def main():
             setattr(a, _attr, list(_v) if isinstance(_v, list) else _v)
         if "provider" not in _given:
             a.cloud = None
+        # Omitting a flag means "keep", so booleans and lists need explicit
+        # off-switches or the vault can only ever gain settings, never lose them.
+        if a.solo:
+            a.co_users = []
+        if a.no_obsidian:
+            a.obsidian = False
 
     # Provider profile. --cloud is the old free-text flag; map it onto a profile.
     prov = a.provider
@@ -302,31 +315,22 @@ def main():
             print(f"FAIL --reconfigure needs an existing .records-project.json at {a.target}")
             print("     Refusing: without it this cannot be distinguished from a fresh scaffold.")
             return 2
-        old = json.load(open(cfg_path, encoding="utf-8"))
-        if a.preset == "generic" and old.get("preset"):
-            a.preset = old["preset"]
-            pdir = os.path.join(TPL, "presets", a.preset)
-            preset = json.load(open(os.path.join(pdir, "preset.json"), encoding="utf-8"))
-            ctx.update({"PRESET": a.preset,
-                        "DOMAIN_WORD": preset["domain_word"],
-                        "DOMAIN_LOWER": preset["domain_word"].lower(),
-                        "ADVISOR_WORD": preset["advisor_word"],
-                        "ADVISOR_WORD_PLURAL": preset["advisor_word_plural"],
-                        "ADVISOR_WORD_TITLE": preset["advisor_word_title"],
-                        "HIGH_STAKES_WORD": preset["high_stakes_word"],
-                        "DISCLAIMER": preset["disclaimer"],
-                        "QUESTION_LIST_INTRO": preset["question_list_intro"],
-                        "CONSERVATISM_NOTE": preset["conservatism_notes"][a.conservatism]})
-        if not co and old.get("co_users"):
-            co = old["co_users"]; shared = len(co) >= 2
-            ctx["shared"] = shared
-            ctx["CO_USER_LIST"] = "\n".join(f"- **{c}**" for c in co)
-            ctx["CO_USER_OTHER"] = co[1] if len(co) > 1 else "the other co-user"
-            ctx["FIRST_AUTHOR"] = co[0]
-            if shared:
-                ctx["OPERATOR_NAME"] = "either co-user"
-        if not a.obsidian and old.get("obsidian"):
-            a.obsidian = True; ctx["obsidian"] = True
+        # The parse-time restore above already carried everything forward. The
+        # piecemeal block that used to live here ran AFTER it and silently overrode
+        # explicit flags: "--preset generic" was reverted to the stored preset and
+        # reported success, and co-users could never be removed.
+        old = json.loads(slurp(cfg_path))
+
+        # Switching preset is NOT a re-render: health and generic have different
+        # folders (Results/Visits vs Records/Meetings). Half-doing it leaves a vault
+        # whose engine and folders disagree, and the validator cannot see that.
+        if a.preset != old.get("preset", a.preset):
+            print(f"FAIL cannot change preset from {old.get('preset')!r} to {a.preset!r} "
+                  f"with --reconfigure.")
+            print("     The presets use different folder names, so this would leave the")
+            print("     engine and the folders disagreeing. Build a new vault and move the")
+            print("     content across deliberately.")
+            return 2
 
         eng = write(os.path.join(a.target, "CLAUDE.md"),
                     render(slurp(os.path.join(TPL, "core", "CLAUDE.md.tmpl")), ctx))
