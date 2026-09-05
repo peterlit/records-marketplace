@@ -307,6 +307,26 @@
         "Passes --co-user twice; one name silently stays solo",
         "Still asks who the DECISION-MAKER is - the father, not either sibling"
       ]
+    },
+    {
+      "id": 31,
+      "expect_skill": "records-migrate",
+      "prompt": "[inside a records project] This folder was set up months ago with an older version of the plugin. Can you bring it up to date?",
+      "expected_output": "Reports findings first; applies only after recovering the unknown settings.",
+      "expectations": [
+        "Runs migrate.py in report mode before writing anything",
+        "Recovers subject and advisors from the old CLAUDE.md and question lists rather than guessing",
+        "Never modifies 01 Master content"
+      ]
+    },
+    {
+      "id": 32,
+      "expect_skill": null,
+      "prompt": "My npm packages are out of date, can you migrate the project to the new version?",
+      "expected_output": "Ordinary dependency work. records-migrate must NOT fire on 'migrate'/'out of date'.",
+      "expectations": [
+        "Does not look for a records vault"
+      ]
     }
   ]
 }

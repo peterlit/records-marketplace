@@ -323,3 +323,27 @@ a phone. Two of these correct guidance that was wrong rather than merely missing
   the presence of the Cowork step / preflight step / first prompt, and co-user guidance
   appearing only in shared mode.
 
+## 0.11.0 — 2026-09-04
+
+- **NEW `records-migrate` + `migrate.py`** — bring an older or hand-built vault up to the
+  current version. **Reports by default and writes nothing**; `--apply` snapshots first, then
+  re-renders only generated files. Afterwards it compares mtime and size of every file under
+  `01 Master`–`99 Archive` and **aborts if a single curated file changed**.
+  `--adopt` writes a `.records-project.json` for folders that predate self-description, so
+  `--reconfigure`, the validator and the other skills stop refusing.
+- **Caught in development, and it was today's bug wearing a new hat:** `--apply` on a vault
+  whose old config lacked `subject` re-rendered `CLAUDE.md` with the placeholder *"the subject"*
+  over the person's name — while printing *"vault valid"* and *"migrated to 0.10.0"*. The
+  curated-content check passed, because `CLAUDE.md` is generated and so not in the sacred list.
+  **The finding said the value was unknown, and the code applied anyway.** Now: a missing
+  setting means UNKNOWN, not empty; `--apply` refuses while any required setting is unknown and
+  names the flags it needs; and a post-render guard fails if any placeholder reached
+  `CLAUDE.md`. The skill tells the model to *recover* the values from the old `CLAUDE.md` and
+  question lists, and to ask rather than invent.
+- The skill also warns, before adopting, that re-rendering **discards hand-edits to
+  `CLAUDE.md`** — for a long-running project those local rules are often the most valuable
+  thing in the folder, so read them out and offer to carry them across.
+- **Eight migration tests**, including that report mode writes nothing, that applying with
+  unknowns refuses *and leaves the name intact*, and that curated content is byte-identical
+  after a successful migration. Suite is now 52 tests.
+

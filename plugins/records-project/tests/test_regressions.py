@@ -481,6 +481,98 @@ class TestChatCompanion(Base):
         self.assertNotIn("{{", body)
 
 
+class TestMigrate(Base):
+    """SHIPPED IN DEVELOPMENT: migrate.py --apply on a vault whose old config lacked
+    'subject' re-rendered CLAUDE.md with the placeholder "the subject" over the
+    person's name — and printed "vault valid" and "migrated" while doing it. The
+    finding said the value was unknown; applying anyway was the bug. Same shape as
+    the --reconfigure blanking, arriving through a new door."""
+
+    def _age(self, v, version="0.4.0", keep=("preset", "co_users", "obsidian", "provider",
+                                             "conflict_patterns", "created")):
+        p = os.path.join(v, ".records-project.json")
+        with open(p, encoding="utf-8") as f:
+            d = json.load(f)
+        old = {k: d[k] for k in keep if k in d}
+        old["plugin_version"] = version
+        self.write_file(p, json.dumps(old, indent=2))
+
+    def test_report_is_the_default_and_writes_nothing(self):
+        v = build(self.path("v"), "--obsidian")
+        self._age(v)
+        before = tree_hashes(v, skip=())
+        rc, out = run("migrate.py", v)
+        self.assertEqual(rc, 0)
+        self.assertIn("REPORT ONLY", out)
+        self.assertEqual(before, tree_hashes(v, skip=()), "report mode wrote something")
+
+    def test_current_vault_reports_nothing_to_do(self):
+        v = build(self.path("v"), "--obsidian")
+        _, out = run("migrate.py", v, expect=0)
+        self.assertIn("up to date", out)
+
+    def test_refuses_to_apply_with_unknown_settings(self):
+        v = build(self.path("v"), "--subject", "Anna Petrova", "--obsidian")
+        self._age(v)
+        rc, out = run("migrate.py", v, "--apply", "--no-snapshot")
+        self.assertNotEqual(rc, 0)
+        self.assertIn("would be written as placeholders", out)
+        self.assertIn("Anna Petrova", self.read(v, "CLAUDE.md"), "the name was blanked")
+
+    def test_supplying_the_unknowns_migrates_cleanly(self):
+        v = build(self.path("v"), "--subject", "Anna Petrova", "--obsidian")
+        self._age(v)
+        run("migrate.py", v, "--apply", "--no-snapshot", "--subject", "Anna Petrova",
+            "--operator", "Peter", "--decision-maker", "Peter",
+            "--advisor", "Dr. Chen:cardiologist", "--conservatism", "balanced",
+            "--language", "English", "--snapshot", "master", "--provider", "local",
+            expect=0)
+        engine = self.read(v, "CLAUDE.md")
+        self.assertIn("Anna Petrova", engine)
+        self.assertNotIn("the subject", engine)
+        self.assertEqual(self.config(v)["plugin_version"],
+                         json.load(open(os.path.join(PLUGIN, ".claude-plugin",
+                                                     "plugin.json")))["version"])
+
+    def test_curated_content_is_never_modified(self):
+        v = build(self.path("v"), "--subject", "Anna Petrova", "--obsidian")
+        marker = "SYNTHETIC-CURATION-MARKER"
+        for rel in ("01 Master/Master Summary.md", "02 Chronicle/Timeline.md"):
+            with open(os.path.join(v, rel), "a", encoding="utf-8") as f:
+                f.write(f"\n- {marker}\n")
+        self._age(v)
+        run("migrate.py", v, "--apply", "--no-snapshot", "--subject", "Anna Petrova",
+            "--operator", "Peter", "--decision-maker", "Peter",
+            "--advisor", "Dr. Chen:cardiologist", "--conservatism", "balanced",
+            "--language", "English", "--snapshot", "master", "--provider", "local",
+            expect=0)
+        for rel in ("01 Master/Master Summary.md", "02 Chronicle/Timeline.md"):
+            self.assertIn(marker, self.read(v, rel), f"{rel} was modified by migration")
+
+    def test_refuses_a_folder_that_is_not_a_vault(self):
+        os.makedirs(self.path("plain"))
+        rc, out = run("migrate.py", self.path("plain"))
+        self.assertNotEqual(rc, 0)
+        self.assertIn("not a records project", out)
+
+    def test_adopt_requires_a_subject(self):
+        v = build(self.path("v"), "--obsidian")
+        os.remove(os.path.join(v, ".records-project.json"))
+        rc, out = run("migrate.py", v, "--adopt", "--apply", "--no-snapshot")
+        self.assertNotEqual(rc, 0)
+        self.assertIn("--subject", out)
+
+    def test_adopts_a_config_less_vault(self):
+        v = build(self.path("v"), "--subject", "Anna Petrova", "--obsidian")
+        os.remove(os.path.join(v, ".records-project.json"))
+        _, out = run("migrate.py", v)
+        self.assertIn("predates self-description", out)
+        run("migrate.py", v, "--adopt", "--apply", "--no-snapshot", "--preset", "health",
+            "--subject", "Anna Petrova", "--operator", "Peter", "--decision-maker", "Peter",
+            "--advisor", "Dr. Chen:cardiologist", expect=0)
+        self.assertEqual(self.config(v)["subject"], "Anna Petrova")
+
+
 # ------------------------------------------------------------------- packaging
 
 class TestPackaging(Base):
